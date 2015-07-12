@@ -40,7 +40,7 @@ def get_banner():
     wrapped_law = _wrap_string(random_law, _terminal_width - len(banner[law_line_index]))
 
     for (index, line) in enumerate(wrapped_law):
-        if index < len(banner):
+        if index + law_line_index < len(banner):
             banner[index + law_line_index] = _expand_banner_line(banner[index + law_line_index], line)
 
     banner.append("")
