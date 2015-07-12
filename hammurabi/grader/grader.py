@@ -1,10 +1,2 @@
-import hammurabi.utils.product as product
-
-
-def main():
-    product.print_banner()
+def grade(args):
     print("Hello from grader!")
-
-
-if __name__ == "__main__":
-    main()

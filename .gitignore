@@ -2,7 +2,7 @@
 # Project-specific
 # -----------------
 hammurabi/grader/problems/*
-#!hammurabi/grader/problems/echoer
+!hammurabi/grader/problems/hworld
 
 # -----------------
 # IntelliJ IDEA
