@@ -42,6 +42,10 @@ def parse_command_line_args():
                                       dest="user",
                                       help="Grade only this user's solution to the problem.",
                                       required=False)
+    grade_command_parser.add_argument("--testcase",
+                                      dest="testcase",
+                                      help="Run only this particular test case file.",
+                                      required=False)
 
     server_command = "server"
     server_command_description = "Serve a Web application for submitting solutions."
