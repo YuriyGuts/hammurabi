@@ -1,7 +1,10 @@
 class Problem(object):
-    def __init__(self, name, root_dir, solutions=None, testcases=None, reference_solution=None, config=None):
+    def __init__(self, name, root_dir, input_filename=None, output_filename=None,
+                 solutions=None, testcases=None, reference_solution=None, config=None):
         self.name = name
         self.root_dir = root_dir
+        self.input_filename = input_filename if input_filename is not None else name + ".in"
+        self.output_filename = output_filename if output_filename is not None else name + ".out"
         self.solutions = solutions if solutions is not None else []
         self.testcases = testcases if testcases is not None else []
         self.reference_solution = reference_solution
@@ -12,10 +15,11 @@ class Problem(object):
 
 
 class Solution(object):
-    def __init__(self, problem, author, root_dir, language=None, run_command=None):
+    def __init__(self, problem, author, root_dir, files=None, language=None, run_command=None):
         self.problem = problem
         self.author = author
         self.root_dir = root_dir
+        self.files = files if files is not None else []
         self.language = language
         self.run_command = run_command
 
@@ -24,8 +28,9 @@ class Solution(object):
 
 
 class TestCase(object):
-    def __init__(self, problem, input_filename, correct_answer_filename, score=1):
+    def __init__(self, problem, name, input_filename, correct_answer_filename, score=1):
         self.problem = problem
+        self.name = name
         self.input_filename = input_filename
         self.correct_answer_filename = correct_answer_filename
         self.score = score

@@ -38,9 +38,9 @@ def parse_command_line_args():
                                       dest="problem",
                                       help="The name of the problem to grade.",
                                       required=False)
-    grade_command_parser.add_argument("--user",
-                                      dest="user",
-                                      help="Grade only this user's solution to the problem.",
+    grade_command_parser.add_argument("--author",
+                                      dest="author",
+                                      help="Grade only this author's solution to the problem.",
                                       required=False)
     grade_command_parser.add_argument("--testcase",
                                       dest="testcase",

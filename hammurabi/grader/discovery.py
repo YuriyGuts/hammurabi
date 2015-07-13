@@ -32,6 +32,9 @@ import hammurabi.utils.confreader as confreader
 from hammurabi.grader.model import *
 
 
+extensions_to_exclude = {"", ".sh", ".in", ".out"}
+
+
 def discover_problems(root_dir):
     result = []
 
@@ -66,12 +69,13 @@ def discover_testcases(problem):
     result = []
     testcase_dir = os.path.join(problem.root_dir, "testcases")
 
-    for input_filename in [filename for filename in glob.glob(os.path.join(testcase_dir, "*.in"))]:
+    for input_filename in get_files_by_glob_pattern(testcase_dir, "*.in"):
         testcase_basename = os.path.basename(input_filename)
         correct_answer_filename = os.path.join(problem.root_dir, "answers", testcase_basename.replace(".in", ".out"))
         score = problem.config.get_safe("testcase_score/{testcase_basename}".format(**locals()), default_value=1)
 
         testcase = TestCase(problem=problem,
+                            name=testcase_basename,
                             input_filename=input_filename,
                             correct_answer_filename=correct_answer_filename,
                             score=score)
@@ -87,6 +91,14 @@ def discover_solutions(problem):
     for solution_dir in get_immediate_subdirs(solutions_root_dir):
         author = os.path.basename(solution_dir)
         solution = Solution(problem=problem, author=author, root_dir=solution_dir)
+
+        solution.files = []
+        for root, dirs, files in os.walk(solution_dir):
+            solution.files.extend([os.path.join(root, file)
+                                   for file in files
+                                   if os.path.splitext(file)[1] not in extensions_to_exclude])
+        solution.files = sorted(solution.files)
+
         solution.language = detect_solution_language(solution)
         result.append(solution)
 
@@ -96,7 +108,6 @@ def discover_solutions(problem):
 def detect_solution_language(solution):
     language_stats = {}
 
-    extensions_to_exclude = {".sh", ""}
     extension_to_language_map = {
         ".c": "cpp",
         ".cpp": "cpp",
@@ -125,6 +136,9 @@ def detect_solution_language(solution):
 
 
 def get_immediate_subdirs(root_dir):
-    return [os.path.join(root_dir, subdir)
-            for subdir in os.listdir(root_dir)
-            if os.path.isdir(os.path.join(root_dir, subdir))]
+    return sorted([os.path.join(root_dir, subdir)
+                   for subdir in os.listdir(root_dir)
+                   if os.path.isdir(os.path.join(root_dir, subdir))])
+
+def get_files_by_glob_pattern(root_dir, pattern):
+    return sorted([filename for filename in glob.glob(os.path.join(root_dir, pattern))])
