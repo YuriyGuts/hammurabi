@@ -3,6 +3,7 @@
 # -----------------
 hammurabi/grader/problems/*
 !hammurabi/grader/problems/hworld
+hammurabi/grader/reports/testrun*
 
 # -----------------
 # IntelliJ IDEA

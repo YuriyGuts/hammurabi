@@ -2,14 +2,15 @@ import errno
 import os
 import shutil
 import subprocess
+from hammurabi.grader.model import *
 
 
 class SolutionRunner(object):
-    def __init__(self, config, solution):
-        self.config = config
+    def __init__(self, solution, config):
         self.solution = solution
+        self.config = config
         self.is_compiled = False
-        self.output_dir = os.path.join(self.solution.root_dir, "output")
+        self.output_dir = os.path.join(self.config.report_output_dir, self.solution.author)
 
     def prepare(self):
         self.compile()
@@ -61,12 +62,39 @@ class SolutionRunner(object):
     def get_run_command_line(self, testcase):
         return [self.solution.language, self.get_entry_point_file()]
 
-    def run(self, testcase):
-        self.supply_testcase(testcase)
-        cmd = ' '.join(self.get_run_command_line(testcase))
-        subprocess.call(cmd, shell=True, cwd=self.solution.root_dir)
-        self.collect_output(testcase)
+    def get_run_command_line_string(self, testcase):
+        return ' '.join(self.get_run_command_line(testcase))
 
-    def collect_output(self, testcase):
+    def create_testrun(self, testcase):
+        answer_filename = os.path.join(self.output_dir, testcase.name + ".out")
+        stdout_filename = os.path.join(self.output_dir, testcase.name + ".stdout")
+        stderr_filename = os.path.join(self.output_dir, testcase.name + ".stderr")
+        memory_limit = self.config.get_safe("limits/memory")
+        time_limit = self.config.get_safe("limits/time/{self.solution.language}".format(**locals()))
+
+        return TestRun(solution=self.solution,
+                       testcase=testcase,
+                       output_dir=self.output_dir,
+                       answer_filename=answer_filename,
+                       stdout_filename=stdout_filename,
+                       stderr_filename=stderr_filename,
+                       memory_limit=memory_limit,
+                       time_limit=self.config.get_safe("limits/time/{self.solution.language}".format(**locals())))
+
+    def run(self, testcase):
+        testrun = self.create_testrun(testcase)
+
+        self.supply_testcase(testcase)
+        cmd = self.get_run_command_line_string(testcase)
+
+        with open(testrun.stdout_filename, "w") as stdout:
+            with open(testrun.stderr_filename, "w") as stderr:
+                subprocess.call(cmd, shell=True, cwd=self.solution.root_dir, stdout=stdout, stderr=stderr)
+
+        self.collect_output(testrun)
+
+        return testrun
+
+    def collect_output(self, testrun):
         shutil.move(os.path.join(self.solution.root_dir, self.solution.problem.output_filename),
-                    os.path.join(self.output_dir, os.path.basename(testcase.correct_answer_filename)))
+                    testrun.answer_filename)

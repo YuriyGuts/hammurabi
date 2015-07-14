@@ -35,10 +35,10 @@ from hammurabi.grader.model import *
 extensions_to_exclude = {"", ".sh", ".in", ".out"}
 
 
-def discover_problems(root_dir):
+def discover_problems(grader_config):
     result = []
 
-    for problem_dir in get_immediate_subdirs(root_dir):
+    for problem_dir in get_immediate_subdirs(grader_config.problem_root_dir):
         problem_name = os.path.basename(problem_dir)
 
         problem = Problem(problem_name, problem_dir)
@@ -70,12 +70,12 @@ def discover_testcases(problem):
     testcase_dir = os.path.join(problem.root_dir, "testcases")
 
     for input_filename in get_files_by_glob_pattern(testcase_dir, "*.in"):
-        testcase_basename = os.path.basename(input_filename)
-        correct_answer_filename = os.path.join(problem.root_dir, "answers", testcase_basename.replace(".in", ".out"))
-        score = problem.config.get_safe("testcase_score/{testcase_basename}".format(**locals()), default_value=1)
+        testcase_name, _ = os.path.splitext(os.path.basename(input_filename))
+        correct_answer_filename = os.path.join(problem.root_dir, "answers", testcase_name + ".out")
+        score = problem.config.get_safe("testcase_score/{testcase_name}".format(**locals()), default_value=1)
 
         testcase = TestCase(problem=problem,
-                            name=testcase_basename,
+                            name=testcase_name,
                             input_filename=input_filename,
                             correct_answer_filename=correct_answer_filename,
                             score=score)

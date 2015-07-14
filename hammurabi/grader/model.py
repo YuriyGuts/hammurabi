@@ -40,9 +40,14 @@ class TestCase(object):
 
 
 class TestRun(object):
-    def __init__(self, solution, testcase, result=None, score=None, memory_limit=None, time_limit=None):
+    def __init__(self, solution, testcase, output_dir, answer_filename, stdout_filename, stderr_filename,
+                 result=None, score=None, memory_limit=None, time_limit=None):
         self.solution = solution
         self.testcase = testcase
+        self.output_dir = output_dir
+        self.answer_filename = answer_filename
+        self.stdout_filename = stdout_filename
+        self.stderr_filename = stderr_filename
         self.result = result
         self.score = score
         self.memory_limit = memory_limit
