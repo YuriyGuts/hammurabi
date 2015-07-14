@@ -5,7 +5,7 @@ import subprocess
 from hammurabi.grader.model import *
 
 
-class SolutionRunner(object):
+class BaseSolutionAdapter(object):
     def __init__(self, solution, config):
         self.solution = solution
         self.config = config

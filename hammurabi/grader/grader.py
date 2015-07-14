@@ -4,7 +4,7 @@ import socket
 import hammurabi.utils.confreader as confreader
 import hammurabi.grader.discovery as discovery
 
-from hammurabi.grader.runners.runner import SolutionRunner
+from hammurabi.grader.adapters.base import BaseSolutionAdapter
 
 
 def grade(args):
@@ -27,7 +27,7 @@ def grade(args):
                     print "-" * 75
 
                     print "Compiling..."
-                    runner = create_runner(solution, config)
+                    runner = create_adapter(solution, config)
                     runner.prepare()
 
                     for testcase in problem.testcases:
@@ -72,5 +72,5 @@ def get_report_output_dir(config):
     return report_output_dir
 
 
-def create_runner(solution, config):
-    return SolutionRunner(solution, config)
+def create_adapter(solution, config):
+    return BaseSolutionAdapter(solution, config)
