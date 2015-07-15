@@ -125,6 +125,11 @@ class TestRunCompilationErrorResult(TestRunResult):
         self.message = message
 
 
+class TestRunSolutionMissingResult(TestRunResult):
+    def __init__(self):
+        super(TestRunSolutionMissingResult, self).__init__("M", "Solution Missing")
+
+
 class TestRunUnverifiedResult(TestRunResult):
     def __init__(self, message):
         super(TestRunUnverifiedResult, self).__init__("U", "Unverified")

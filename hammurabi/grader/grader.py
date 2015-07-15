@@ -1,6 +1,7 @@
 import datetime
 import os
 import socket
+import sys
 import traceback
 import hammurabi.utils.confreader as confreader
 import hammurabi.grader.discovery as discovery
@@ -132,8 +133,8 @@ def judge_solution(solution, testcases):
             else:
                 testrun.result.score = 0
 
-        except Exception as e:
-            testrun.record_end_time()
+        except:
+            e = sys.exc_info()
             testrun.result = TestRunInternalErrorResult(e)
 
         time_elapsed = testrun.get_elapsed_milliseconds()
