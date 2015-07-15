@@ -26,3 +26,6 @@ class ObjectDictView:
                 return default_value
 
         return current_dict
+
+    def merge(self, other_object):
+        self.__dict__.update(other_object.__dict__)

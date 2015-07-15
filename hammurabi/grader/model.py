@@ -1,3 +1,6 @@
+import time
+
+
 class Problem(object):
     def __init__(self, name, root_dir, input_filename=None, output_filename=None,
                  solutions=None, testcases=None, reference_solution=None, config=None):
@@ -26,6 +29,14 @@ class Solution(object):
     def __str__(self):
         return "Problem: {self.problem.name}   Author: {self.author}   Language: {self.language}".format(**locals())
 
+    def get_file_by_predicate(self, predicate):
+        matches = self.get_files_by_predicate(predicate)
+        return matches[0] if len(matches) > 0 else None
+
+    def get_files_by_predicate(self, predicate):
+        matches = [file for file in self.files if predicate(file)]
+        return matches
+
 
 class TestCase(object):
     def __init__(self, problem, name, input_filename, correct_answer_filename, score=1):
@@ -40,37 +51,54 @@ class TestCase(object):
 
 
 class TestRun(object):
-    def __init__(self, solution, testcase, output_dir, answer_filename, stdout_filename, stderr_filename,
-                 result=None, score=None, memory_limit=None, time_limit=None):
+    def __init__(self, solution, testcase, output_dir, answer_filename, compiler_output_filename, stdout_filename, stderr_filename,
+                 result=None, start_time=None, memory_limit=None, time_limit=None):
         self.solution = solution
         self.testcase = testcase
         self.output_dir = output_dir
+        self.compiler_output_filename = compiler_output_filename
         self.answer_filename = answer_filename
         self.stdout_filename = stdout_filename
         self.stderr_filename = stderr_filename
         self.result = result
-        self.score = score
+        self.start_time = start_time
+        self.end_time = None
         self.memory_limit = memory_limit
         self.time_limit = time_limit
 
+    def __str__(self):
+        return "Solution: {self.solution.problem.name} / {self.solution.author}, Result: {self.result}".format(**locals())
+
+    def record_start_time(self):
+        self.start_time = int(round(time.time() * 1000))
+
+    def record_end_time(self):
+        self.end_time = int(round(time.time() * 1000))
+
+    def get_elapsed_milliseconds(self):
+        return self.end_time - self.start_time
+
 
 class TestRunResult(object):
-    def __init__(self, status_code, status):
+    def __init__(self, status_code, status, score=None):
         self.status_code = status_code
         self.status = status
+        self.score = score
 
     def __str__(self):
-        return self.status
+        return "[{self.status_code}] {self.status}, Score: {self.score}".format(**locals())
 
 
-class TestRunCorrectResult(TestRunResult):
+class TestRunCorrectAnswerResult(TestRunResult):
     def __init__(self):
-        super(TestRunCorrectResult, self).__init__("C", "Correct")
+        super(TestRunCorrectAnswerResult, self).__init__("C", "Correct Answer")
 
 
-class TestRunWrongResult(TestRunResult):
-    def __init__(self):
-        super(TestRunWrongResult, self).__init__("W", "Wrong")
+class TestRunWrongAnswerResult(TestRunResult):
+    def __init__(self, expected=None, actual=None):
+        super(TestRunWrongAnswerResult, self).__init__("W", "Wrong Answer")
+        self.expected = expected
+        self.actual = actual
 
 
 class TestRunRuntimeErrorResult(TestRunResult):
@@ -79,10 +107,16 @@ class TestRunRuntimeErrorResult(TestRunResult):
         self.message = message
 
 
+class TestRunFormatErrorResult(TestRunResult):
+    def __init__(self, exception=None):
+        super(TestRunFormatErrorResult, self).__init__("F", "Invalid Output Format")
+        self.exception = exception
+
+
 class TestRunInternalErrorResult(TestRunResult):
-    def __init__(self, message):
-        super(TestRunInternalErrorResult, self).__init__("X", "Internal Error")
-        self.message = message
+    def __init__(self, exception):
+        super(TestRunInternalErrorResult, self).__init__("X", "Judge Internal Error")
+        self.exception = exception
 
 
 class TestRunCompilationErrorResult(TestRunResult):
@@ -94,3 +128,8 @@ class TestRunCompilationErrorResult(TestRunResult):
 class TestRunTimeoutResult(TestRunResult):
     def __init__(self):
         super(TestRunTimeoutResult, self).__init__("T", "Timeout")
+
+
+class GraderJobScope(object):
+    def __init__(self, tasks):
+        self.tasks = tasks

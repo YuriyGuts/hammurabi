@@ -3,26 +3,29 @@ Builds the object model for the grader assuming the following directory layout:
 
 |
 |-- %problem1_name%
-    |-- solutions
-        |-- %author1_name%
-            |-- %sourcefile1%.java
-            |-- %sourcefile2%.java
-        |-- %author2_name%
-            |-- %sourcefile1%.py
-    |-- testcases
-        |-- 01.in
-        |-- 02.in
-        |-- 03.in
-    |-- answers
-        |-- 01.out
-        |-- 02.out
-        |-- 03.out
-    |-- problem.conf
+|   |-- solutions
+|   |   |-- %author1_name%
+|   |   |   |-- %sourcefile1%.java
+|   |   |   |-- %sourcefile2%.java
+|   |   |-- %author2_name%
+|   |   |   |-- %sourcefile1%.py
+|   |   |-- %author3_name%
+|   |   |   |-- (...arbitrary tree depth...)
+|   |   |   | ...... |-- %sourcefile%.java
+|   |-- testcases
+|   |   |-- 01.in
+|   |   |-- 02.in
+|   |   |-- 03.in
+|   |-- answers
+|   |   |-- 01.out
+|   |   |-- 02.out
+|   |   |-- 03.out
+|   |-- problem.conf
 |-- %problem2_name%
-    |-- solutions
-    |-- testcases
-    |-- answers
-    |-- problem.conf
+|   |-- solutions
+|   |-- testcases
+|   |-- answers
+|   |-- problem.conf
 
 """
 
@@ -32,7 +35,17 @@ import hammurabi.utils.confreader as confreader
 from hammurabi.grader.model import *
 
 
-extensions_to_exclude = {"", ".sh", ".in", ".out"}
+extension_to_language_map = {
+    ".c": "cpp",
+    ".cpp": "cpp",
+    ".cs": "csharp",
+    ".java": "java",
+    ".js": "javascript",
+    ".php": "php",
+    ".py": "python",
+    ".rb": "ruby",
+    ".scala": "scala",
+}
 
 
 def discover_problems(grader_config):
@@ -43,6 +56,8 @@ def discover_problems(grader_config):
 
         problem = Problem(problem_name, problem_dir)
         problem.config = read_problem_config(problem)
+        problem.config.merge(grader_config)
+
         problem.testcases = discover_testcases(problem)
         problem.solutions = discover_solutions(problem)
 
@@ -74,11 +89,13 @@ def discover_testcases(problem):
         correct_answer_filename = os.path.join(problem.root_dir, "answers", testcase_name + ".out")
         score = problem.config.get_safe("testcase_score/{testcase_name}".format(**locals()), default_value=1)
 
-        testcase = TestCase(problem=problem,
-                            name=testcase_name,
-                            input_filename=input_filename,
-                            correct_answer_filename=correct_answer_filename,
-                            score=score)
+        testcase = TestCase(
+            problem=problem,
+            name=testcase_name,
+            input_filename=input_filename,
+            correct_answer_filename=correct_answer_filename,
+            score=score
+        )
         result.append(testcase)
 
     return result
@@ -94,9 +111,11 @@ def discover_solutions(problem):
 
         solution.files = []
         for root, dirs, files in os.walk(solution_dir):
-            solution.files.extend([os.path.join(root, file)
-                                   for file in files
-                                   if os.path.splitext(file)[1] not in extensions_to_exclude])
+            solution.files.extend([
+                os.path.join(root, code_file)
+                for code_file in files
+                if os.path.splitext(code_file)[1] in extension_to_language_map
+            ])
         solution.files = sorted(solution.files)
 
         solution.language = detect_solution_language(solution)
@@ -108,22 +127,10 @@ def discover_solutions(problem):
 def detect_solution_language(solution):
     language_stats = {}
 
-    extension_to_language_map = {
-        ".c": "cpp",
-        ".cpp": "cpp",
-        ".cs": "csharp",
-        ".java": "java",
-        ".js": "javascript",
-        ".php": "php",
-        ".py": "python",
-        ".rb": "ruby",
-        ".scala": "scala",
-    }
-
     for root, dirs, files in os.walk(solution.root_dir):
         for file in files:
             filename, extension = [str(component) for component in os.path.splitext(file)]
-            if extension not in extensions_to_exclude and extension in extension_to_language_map:
+            if extension in extension_to_language_map:
                 language = extension_to_language_map[extension]
                 if language not in language_stats:
                     language_stats[language] = 0
@@ -136,9 +143,11 @@ def detect_solution_language(solution):
 
 
 def get_immediate_subdirs(root_dir):
-    return sorted([os.path.join(root_dir, subdir)
-                   for subdir in os.listdir(root_dir)
-                   if os.path.isdir(os.path.join(root_dir, subdir))])
+    return sorted([
+        os.path.join(root_dir, subdir)
+        for subdir in os.listdir(root_dir)
+        if os.path.isdir(os.path.join(root_dir, subdir))
+    ])
 
 def get_files_by_glob_pattern(root_dir, pattern):
     return sorted([filename for filename in glob.glob(os.path.join(root_dir, pattern))])

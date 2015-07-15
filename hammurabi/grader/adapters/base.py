@@ -1,19 +1,21 @@
 import errno
 import os
 import shutil
-import subprocess
+import hammurabi.utils.fileio as fileio
+
 from hammurabi.grader.model import *
+from hammurabi.grader.runners import *
+from hammurabi.utils.exceptions import *
 
 
 class BaseSolutionAdapter(object):
-    def __init__(self, solution, config):
+    def __init__(self, solution):
         self.solution = solution
-        self.config = config
+        self.config = solution.problem.config
         self.is_compiled = False
         self.output_dir = os.path.join(self.config.report_output_dir, self.solution.author)
 
     def prepare(self):
-        self.compile()
         self.clean_output()
 
     def clean_output(self):
@@ -28,7 +30,7 @@ class BaseSolutionAdapter(object):
             if e.errno != errno.EEXIST:
                 raise Exception("Internal error: cannot create output directory")
 
-    def compile(self):
+    def compile(self, testrun):
         self.is_compiled = True
 
     def get_entry_point_file(self):
@@ -40,61 +42,76 @@ class BaseSolutionAdapter(object):
 
         # If there's more than one file, the file which has the name of the problem, must be the solution.
         if entry_point_file is None:
-            entry_point_file = self.get_file_by_predicate(
+            entry_point_file = self.solution.get_file_by_predicate(
                 lambda f: os.path.splitext(os.path.basename(f))[0].lower() == self.solution.problem.name.lower()
             )
 
         # If that fails, try to get the first file with the name 'main' or 'program'.
         if entry_point_file is None:
-            entry_point_file = self.get_file_by_predicate(
+            entry_point_file = self.solution.get_file_by_predicate(
                 lambda f: os.path.splitext(os.path.basename(f))[0].lower() in ["main", "program"]
             )
         return entry_point_file
-
-    def get_file_by_predicate(self, predicate):
-        matches = [file for file in self.solution.files if predicate(file)]
-        return matches[0] if len(matches) > 0 else None
 
     def supply_testcase(self, testcase):
         solution_input_filename = os.path.join(self.solution.root_dir, self.solution.problem.input_filename)
         shutil.copyfile(testcase.input_filename, solution_input_filename)
 
-    def get_run_command_line(self, testcase):
+    def get_run_command_line(self, testrun):
         return [self.solution.language, self.get_entry_point_file()]
 
-    def get_run_command_line_string(self, testcase):
-        return ' '.join(self.get_run_command_line(testcase))
+    def get_run_command_line_string(self, testrun):
+        return ' '.join(self.get_run_command_line(testrun))
 
     def create_testrun(self, testcase):
+        compiler_output_filename = os.path.join(self.output_dir, "compiler.log")
         answer_filename = os.path.join(self.output_dir, testcase.name + ".out")
         stdout_filename = os.path.join(self.output_dir, testcase.name + ".stdout")
         stderr_filename = os.path.join(self.output_dir, testcase.name + ".stderr")
         memory_limit = self.config.get_safe("limits/memory")
         time_limit = self.config.get_safe("limits/time/{self.solution.language}".format(**locals()))
 
-        return TestRun(solution=self.solution,
-                       testcase=testcase,
-                       output_dir=self.output_dir,
-                       answer_filename=answer_filename,
-                       stdout_filename=stdout_filename,
-                       stderr_filename=stderr_filename,
-                       memory_limit=memory_limit,
-                       time_limit=self.config.get_safe("limits/time/{self.solution.language}".format(**locals())))
+        return TestRun(
+            solution=self.solution,
+            testcase=testcase,
+            output_dir=self.output_dir,
+            compiler_output_filename=compiler_output_filename,
+            answer_filename=answer_filename,
+            stdout_filename=stdout_filename,
+            stderr_filename=stderr_filename,
+            memory_limit=memory_limit,
+            time_limit=self.config.get_safe("limits/time/{self.solution.language}".format(**locals()))
+        )
 
-    def run(self, testcase):
-        testrun = self.create_testrun(testcase)
+    def run(self, testrun):
+        testrun.record_start_time()
 
-        self.supply_testcase(testcase)
-        cmd = self.get_run_command_line_string(testcase)
+        if not self.is_compiled:
+            self.compile(testrun)
 
-        with open(testrun.stdout_filename, "w") as stdout:
-            with open(testrun.stderr_filename, "w") as stderr:
-                subprocess.call(cmd, shell=True, cwd=self.solution.root_dir, stdout=stdout, stderr=stderr)
+        self.supply_testcase(testrun.testcase)
+        cmd = self.get_run_command_line_string(testrun)
+
+        testrun.record_start_time()
+        runner = self.create_runner(testrun, cmd)
+        runner.run(testrun, cmd)
+        testrun.record_end_time()
 
         self.collect_output(testrun)
 
-        return testrun
+    def create_runner(self, testrun, cmd):
+        runner_class = testrun.solution.problem.config.get_safe("runner/name", default_value="SubprocessSolutionRunner")
+        runner = globals()[runner_class]
+        return runner()
 
     def collect_output(self, testrun):
-        shutil.move(os.path.join(self.solution.root_dir, self.solution.problem.output_filename),
-                    testrun.answer_filename)
+        given_answer_filename = os.path.join(self.solution.root_dir, self.solution.problem.output_filename)
+        if not os.path.exists(given_answer_filename):
+            if os.path.getsize(testrun.stderr_filename) > 0:
+                error_text = fileio.read_entire_file(testrun.stderr_filename)
+                result = TestRunRuntimeErrorResult(message=error_text)
+            else:
+                result = TestRunFormatErrorResult()
+            raise TestRunPrematureTerminationError(result)
+
+        shutil.move(given_answer_filename, testrun.answer_filename)
