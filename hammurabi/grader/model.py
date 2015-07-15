@@ -6,8 +6,8 @@ class Problem(object):
                  solutions=None, testcases=None, reference_solution=None, config=None):
         self.name = name
         self.root_dir = root_dir
-        self.input_filename = input_filename if input_filename is not None else name + ".in"
-        self.output_filename = output_filename if output_filename is not None else name + ".out"
+        self.input_filename = input_filename
+        self.output_filename = output_filename
         self.solutions = solutions if solutions is not None else []
         self.testcases = testcases if testcases is not None else []
         self.reference_solution = reference_solution

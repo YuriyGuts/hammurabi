@@ -58,6 +58,9 @@ def discover_problems(grader_config):
         problem.config = read_problem_config(problem)
         problem.config.merge(grader_config)
 
+        problem.input_filename = problem.config.get_safe("problem_input_file", default_value=problem.name + ".in")
+        problem.output_filename = problem.config.get_safe("problem_output_file", default_value=problem.name + ".out")
+
         problem.testcases = discover_testcases(problem)
         problem.solutions = discover_solutions(problem)
 
