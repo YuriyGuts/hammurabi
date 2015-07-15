@@ -125,6 +125,12 @@ class TestRunCompilationErrorResult(TestRunResult):
         self.message = message
 
 
+class TestRunUnverifiedResult(TestRunResult):
+    def __init__(self, message):
+        super(TestRunUnverifiedResult, self).__init__("U", "Unverified")
+        self.message = message
+
+
 class TestRunTimeoutResult(TestRunResult):
     def __init__(self):
         super(TestRunTimeoutResult, self).__init__("T", "Timeout")

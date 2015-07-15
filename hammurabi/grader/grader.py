@@ -55,7 +55,8 @@ def get_scope(problems, args, config):
             solution
             for solution in problem.solutions
             if args.author is None or args.author == solution.author
-        ]
+        ] if not args.reference else [problem.reference_solution]
+
         testcases_to_run = [
             testcase
             for testcase in problem.testcases
@@ -115,8 +116,12 @@ def judge_solution(solution, testcases):
             try:
                 testrun = adapter.create_testrun(testcase)
                 adapter.run(testrun)
-                verifier = create_verifier(testrun)
-                is_correct = verifier.verify(testrun)
+
+                if solution != solution.problem.reference_solution:
+                    verifier = create_verifier(testrun)
+                    is_correct = verifier.verify(testrun)
+                else:
+                    testrun.result = TestRunUnverifiedResult("Verification ignored - running the reference solution.")
 
             except TestRunPrematureTerminationError as e:
                 testrun.record_end_time()

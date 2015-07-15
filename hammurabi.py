@@ -34,32 +34,50 @@ def parse_command_line_args():
     grade_command = "grade"
     grade_command_description = "Check one or more solutions."
     grade_command_parser = subparsers.add_parser(grade_command, help=grade_command_description)
-    grade_command_parser.add_argument("--problem",
-                                      dest="problem",
-                                      help="The name of the problem to grade.",
-                                      required=False)
-    grade_command_parser.add_argument("--author",
-                                      dest="author",
-                                      help="Grade only this author's solution to the problem.",
-                                      required=False)
-    grade_command_parser.add_argument("--testcase",
-                                      dest="testcase",
-                                      help="Run only this particular test case file.",
-                                      required=False)
+    grade_command_parser.add_argument(
+        "--problem",
+        dest="problem",
+        help="The name of the problem to grade.",
+        required=False
+    )
+    author_group = grade_command_parser.add_mutually_exclusive_group()
+    author_group.add_argument(
+        "--author",
+        dest="author",
+        help="Grade only this author's solution to the problem.",
+        required=False
+    )
+    author_group.add_argument(
+        "--reference",
+        dest="reference",
+        action="store_true",
+        help="Run only the reference solution (you can do this to produce the correct answers to a problem).",
+        required=False
+    )
+    grade_command_parser.add_argument(
+        "--testcase",
+        dest="testcase",
+        help="Run only this particular test case name.",
+        required=False
+    )
 
     server_command = "server"
     server_command_description = "Serve a Web application for submitting solutions."
     server_command_parser = subparsers.add_parser(server_command, help=server_command_description)
-    server_command_parser.add_argument("--address",
-                                       dest="address",
-                                       help="Address to listen on.",
-                                       default="0.0.0.0",
-                                       required=False)
-    server_command_parser.add_argument("--port",
-                                       dest="port",
-                                       help="Port to listen on.",
-                                       default="4266",
-                                       required=False)
+    server_command_parser.add_argument(
+        "--address",
+        dest="address",
+        help="Address to listen on.",
+        default="0.0.0.0",
+        required=False
+    )
+    server_command_parser.add_argument(
+        "--port",
+        dest="port",
+        help="Port to listen on.",
+        default="4266",
+        required=False
+    )
 
     grade_command_parser.prog = grade_command_parser.prog.replace(" [COMMAND] [OPTIONS]", "").replace("usage: ", "")
     server_command_parser.prog = server_command_parser.prog.replace(" [COMMAND] [OPTIONS]", "").replace("usage: ", "")
@@ -71,7 +89,7 @@ def parse_command_line_args():
         for command, description, parser in [(grade_command, grade_command_description, grade_command_parser),
                                              (server_command, server_command_description, server_command_parser)]:
             print ""
-            print "-" * 30, command, "-" * 30
+            print "-" * 30, "COMMAND:", command, "-" * 30
             print description
             print ""
             parser.print_help()
