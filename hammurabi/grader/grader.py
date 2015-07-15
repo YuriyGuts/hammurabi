@@ -149,7 +149,7 @@ def judge_solution(solution, testcases):
         judge_time_elapsed = testrun.get_judge_elapsed_milliseconds()
         judge_overhead = judge_time_elapsed - lean_time_elapsed
 
-        print "-> {testrun.result}, Lean time: {lean_time_elapsed} ms, Judge time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals())
+        print "-> {testrun.result}, Time: {lean_time_elapsed} ms, Overall time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals())
         testruns.append(testrun)
 
     return testruns
