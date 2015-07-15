@@ -29,6 +29,7 @@ Builds the object model for the grader assuming the following directory layout:
 
 """
 
+import copy
 import glob
 import os
 import hammurabi.utils.confreader as confreader
@@ -55,8 +56,8 @@ def discover_problems(grader_config):
         problem_name = os.path.basename(problem_dir)
 
         problem = Problem(problem_name, problem_dir)
-        problem.config = read_problem_config(problem)
-        problem.config.merge(grader_config)
+        problem.config = copy.deepcopy(grader_config)
+        problem.config.merge(read_problem_config(problem))
 
         problem.input_filename = problem.config.get_safe("problem_input_file", default_value=problem.name + ".in")
         problem.output_filename = problem.config.get_safe("problem_output_file", default_value=problem.name + ".out")
