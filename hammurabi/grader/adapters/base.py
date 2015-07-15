@@ -84,7 +84,6 @@ class BaseSolutionAdapter(object):
         )
 
     def run(self, testrun):
-        testrun.record_start_time()
         if self.get_entry_point_file() is None:
             result = TestRunSolutionMissingResult()
             raise TestRunPrematureTerminationError(result)
@@ -95,10 +94,8 @@ class BaseSolutionAdapter(object):
         self.supply_testcase(testrun.testcase)
         cmd = self.get_run_command_line_string(testrun)
 
-        testrun.record_start_time()
         runner = self.create_runner(testrun, cmd)
         runner.run(testrun, cmd)
-        testrun.record_end_time()
 
         self.collect_output(testrun)
 

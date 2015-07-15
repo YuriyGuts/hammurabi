@@ -116,6 +116,7 @@ def judge_solution(solution, testcases):
             print "Running test case: {testcase.name} (score: {testcase.score})".format(**locals()),
             try:
                 testrun = adapter.create_testrun(testcase)
+                testrun.record_judge_start_time()
                 adapter.run(testrun)
 
                 if solution != solution.problem.reference_solution:
@@ -125,7 +126,6 @@ def judge_solution(solution, testcases):
                     testrun.result = TestRunUnverifiedResult("Verification ignored - running the reference solution.")
 
             except TestRunPrematureTerminationError as e:
-                testrun.record_end_time()
                 testrun.result = e.result
 
             if isinstance(testrun.result, TestRunCorrectAnswerResult):
@@ -137,8 +137,12 @@ def judge_solution(solution, testcases):
             e = sys.exc_info()
             testrun.result = TestRunInternalErrorResult(e)
 
-        time_elapsed = testrun.get_elapsed_milliseconds()
-        print "-> {testrun.result}, Time: {time_elapsed} ms".format(**locals())
+        testrun.record_judge_end_time()
+        lean_time_elapsed = testrun.get_lean_elapsed_milliseconds()
+        judge_time_elapsed = testrun.get_judge_elapsed_milliseconds()
+        judge_overhead = judge_time_elapsed - lean_time_elapsed
+
+        print "-> {testrun.result}, Lean time: {lean_time_elapsed} ms, Judge time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals())
         testruns.append(testrun)
 
     return testruns

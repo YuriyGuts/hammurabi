@@ -52,7 +52,7 @@ class TestCase(object):
 
 class TestRun(object):
     def __init__(self, solution, testcase, output_dir, answer_filename, compiler_output_filename, stdout_filename, stderr_filename,
-                 result=None, start_time=None, memory_limit=None, time_limit=None):
+                 result=None, memory_limit=None, time_limit=None):
         self.solution = solution
         self.testcase = testcase
         self.output_dir = output_dir
@@ -61,22 +61,40 @@ class TestRun(object):
         self.stdout_filename = stdout_filename
         self.stderr_filename = stderr_filename
         self.result = result
-        self.start_time = start_time
-        self.end_time = None
+        self.judge_start_time = None
+        self.judge_end_time = None
+        self.lean_start_time = None
+        self.lean_end_time = None
         self.memory_limit = memory_limit
         self.time_limit = time_limit
 
     def __str__(self):
         return "Solution: {self.solution.problem.name} / {self.solution.author}, Result: {self.result}".format(**locals())
 
-    def record_start_time(self):
-        self.start_time = int(round(time.time() * 1000))
+    def record_judge_start_time(self):
+        self.judge_start_time = self._get_timestamp()
 
-    def record_end_time(self):
-        self.end_time = int(round(time.time() * 1000))
+    def record_judge_end_time(self):
+        self.judge_end_time = self._get_timestamp()
 
-    def get_elapsed_milliseconds(self):
-        return self.end_time - self.start_time
+    def record_lean_start_time(self):
+        self.lean_start_time = self._get_timestamp()
+
+    def record_lean_end_time(self):
+        self.lean_end_time = self._get_timestamp()
+
+    def get_judge_elapsed_milliseconds(self):
+        # if self.judge_start_time is None or self.judge_end_time is None:
+        #     return 0
+        return self.judge_end_time - self.judge_start_time
+
+    def get_lean_elapsed_milliseconds(self):
+        if self.lean_start_time is None or self.lean_end_time is None:
+            return 0
+        return self.lean_end_time - self.lean_start_time
+
+    def _get_timestamp(self):
+        return int(round(time.time() * 1000))
 
 
 class TestRunResult(object):

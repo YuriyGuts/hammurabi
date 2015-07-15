@@ -31,6 +31,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
 
         with open(testrun.stdout_filename, "w") as stdout:
             with open(testrun.stderr_filename, "w") as stderr:
+                testrun.record_lean_start_time()
                 proc = subprocess.Popen(cmd, shell=True, cwd=testrun.solution.root_dir, stdout=stdout, stderr=stderr)
 
                 timer = threading.Timer(timeout_sec, kill_process)
@@ -40,6 +41,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
 
                 if timer.expired:
                     # Process killed by timer -> raise an exception.
+                    testrun.record_lean_end_time()
                     raise SubprocessTimeoutError(
                         message="Process #{proc.pid} killed after {timeout_sec} seconds".format(**locals()),
                         timeout=timeout_sec,
@@ -48,5 +50,6 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
 
                 # Process completed naturally -> cancel the timer and return the exit code.
                 timer.cancel()
+                testrun.record_lean_end_time()
 
                 return proc.returncode
