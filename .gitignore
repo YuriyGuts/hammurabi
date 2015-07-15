@@ -3,7 +3,13 @@
 # -----------------
 hammurabi/grader/problems/*
 !hammurabi/grader/problems/hworld
+
 hammurabi/grader/reports/testrun*
+
+hammurabi/grader/verifiers/*
+!hammurabi/grader/verifiers/__init__.py
+!hammurabi/grader/verifiers/common.py
+!hammurabi/grader/verifiers/custom.py
 
 # -----------------
 # IntelliJ IDEA
