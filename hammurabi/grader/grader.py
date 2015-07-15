@@ -158,6 +158,8 @@ def judge_solution(solution, testcases):
 def create_adapter(solution):
     if solution.language == "java":
         return JavaSolutionAdapter(solution)
+    elif solution.language == "javascript":
+        return JavaScriptSolutionAdapter(solution)
     return BaseSolutionAdapter(solution)
 
 
