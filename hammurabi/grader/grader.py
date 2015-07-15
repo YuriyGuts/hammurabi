@@ -20,18 +20,22 @@ def grade(args):
 
     testruns = []
 
-    for problem in scope.tasks:
-        print "Judging problem: {problem.name}".format(**locals())
-        print "=" * 75
+    try:
+        for problem in scope.tasks:
+            print "Judging problem: {problem.name}".format(**locals())
+            print "=" * 75
 
-        for solution in scope.tasks[problem]:
-            print
-            print "Judging solution: {problem.name}   Author: {solution.author}   Language: {solution.language}".format(**locals())
-            print "-" * 75
+            for solution in scope.tasks[problem]:
+                print
+                print "Judging solution: {problem.name}   Author: {solution.author}   Language: {solution.language}".format(**locals())
+                print "-" * 75
 
-            testcases = scope.tasks[problem][solution]
-            solution_testruns = judge_solution(solution, testcases)
-            testruns.extend(solution_testruns)
+                testcases = scope.tasks[problem][solution]
+                solution_testruns = judge_solution(solution, testcases)
+                testruns.extend(solution_testruns)
+
+    except KeyboardInterrupt:
+        pass
 
     produce_report(testruns)
 
@@ -132,6 +136,9 @@ def judge_solution(solution, testcases):
                 testrun.result.score = testrun.testcase.score
             else:
                 testrun.result.score = 0
+
+        except KeyboardInterrupt:
+            raise
 
         except:
             e = sys.exc_info()

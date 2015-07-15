@@ -35,6 +35,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
                 proc = subprocess.Popen(cmd, shell=True, cwd=testrun.solution.root_dir, stdout=stdout, stderr=stderr)
 
                 timer = threading.Timer(timeout_sec, kill_process)
+                timer.setDaemon(True)
                 timer.expired = False
                 timer.start()
                 proc.communicate()
