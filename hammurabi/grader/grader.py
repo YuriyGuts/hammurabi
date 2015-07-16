@@ -52,7 +52,7 @@ def get_scope(problems, args, config):
     problems_to_run = [
         problem
         for problem in problems
-        if args.problem is None or args.problem == problem.name
+        if args.problem is None or problem.name in args.problem
     ]
 
     for problem in problems_to_run:
@@ -61,13 +61,13 @@ def get_scope(problems, args, config):
         solutions_to_run = [
             solution
             for solution in problem.solutions
-            if args.author is None or args.author == solution.author
+            if args.author is None or solution.author in args.author
         ] if not args.reference else [problem.reference_solution]
 
         testcases_to_run = [
             testcase
             for testcase in problem.testcases
-            if args.testcase is None or args.testcase == testcase.name
+            if args.testcase is None or testcase.name in args.testcase
         ]
 
         for solution in solutions_to_run:

@@ -37,14 +37,16 @@ def parse_command_line_args():
     grade_command_parser.add_argument(
         "--problem",
         dest="problem",
-        help="The name of the problem to grade.",
+        nargs="+",
+        help="The names of the problems to grade.",
         required=False
     )
     author_group = grade_command_parser.add_mutually_exclusive_group()
     author_group.add_argument(
         "--author",
         dest="author",
-        help="Grade only this author's solution to the problem.",
+        nargs="+",
+        help="Grade only these authors' solutions.",
         required=False
     )
     author_group.add_argument(
@@ -57,7 +59,8 @@ def parse_command_line_args():
     grade_command_parser.add_argument(
         "--testcase",
         dest="testcase",
-        help="Run only this particular test case name.",
+        nargs="+",
+        help="Run only these particular test cases (by name, no extensions).",
         required=False
     )
 
