@@ -173,12 +173,15 @@ def create_verifier(testrun):
 
 def produce_report(testruns):
     testrun_csv_log_location = os.path.join(testruns[0].testcase.problem.config.report_output_dir, "testruns.csv")
+    matrix_csv_report_location = os.path.join(testruns[0].testcase.problem.config.report_output_dir, "matrix.csv")
     full_html_log_location = os.path.join(testruns[0].testcase.problem.config.report_output_dir, "report.html")
 
     reporting.generate_testrun_log_csv(testruns, testrun_csv_log_location)
+    reporting.generate_matrix_report_csv(testruns, matrix_csv_report_location)
     reporting.generate_full_log_html(testruns, full_html_log_location)
 
     print
     print "Reports:"
     print "CSV log:", testrun_csv_log_location
+    print "Matrix CSV report:", matrix_csv_report_location
     print "Detailed HTML log:", full_html_log_location

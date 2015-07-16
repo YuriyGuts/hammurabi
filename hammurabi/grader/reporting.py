@@ -36,6 +36,43 @@ def generate_testrun_log_csv(testruns, output_filename):
             })
 
 
+def generate_matrix_report_csv(testruns, output_filename):
+    field_names = ["problem", "testcase"]
+    unique_problems = sorted(list(set([testrun.solution.problem.name for testrun in testruns])))
+    unique_authors = sorted(list(set([testrun.solution.author for testrun in testruns])))
+    field_names.extend(unique_authors)
+
+    with open(output_filename, "w") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=field_names)
+        writer.writeheader()
+
+        for problem_name in unique_problems:
+            unique_testcases = sorted(list(set([
+                testrun.testcase.name
+                for testrun in testruns
+                if testrun.solution.problem.name == problem_name
+            ])))
+
+            for testcase_name in unique_testcases:
+                row = {
+                    "problem": problem_name,
+                    "testcase": testcase_name,
+                }
+
+                for author in unique_authors:
+                    testrun = [
+                        testrun
+                        for testrun in testruns
+                        if testrun.solution.author == author and testrun.testcase.name == testcase_name
+                    ]
+                    if len(testrun) > 0:
+                        row[author] = testrun[0].result.status_code
+                    else:
+                        row[author] = TestRunSolutionMissingResult().status_code
+
+                writer.writerow(row)
+
+
 def generate_full_log_html(testruns, output_filename):
     def create_testcase_summary_row(element, category, value):
         row = element.tr
