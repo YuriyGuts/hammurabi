@@ -64,7 +64,7 @@ class BaseSolutionAdapter(object):
         return ' '.join(self.get_run_command_line(testrun))
 
     def create_testrun(self, testcase):
-        compiler_output_filename = os.path.join(self.output_dir, "compiler.log")
+        compiler_output_filename = os.path.join(self.output_dir, "compiler_{testcase.name}.log".format(**locals()))
         answer_filename = os.path.join(self.output_dir, testcase.name + ".out")
         stdout_filename = os.path.join(self.output_dir, testcase.name + ".stdout")
         stderr_filename = os.path.join(self.output_dir, testcase.name + ".stderr")
