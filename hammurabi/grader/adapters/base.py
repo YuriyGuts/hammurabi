@@ -13,7 +13,7 @@ class BaseSolutionAdapter(object):
         self.solution = solution
         self.config = solution.problem.config
         self.is_compiled = False
-        self.output_dir = os.path.join(self.config.report_output_dir, self.solution.author)
+        self.output_dir = os.path.join(self.config.report_output_dir, self.solution.problem.name, self.solution.author)
 
     def prepare(self):
         self.clean_output()
