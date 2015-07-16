@@ -6,6 +6,11 @@ def read_entire_file(filename):
         return f.read()
 
 
+def write_entire_file(filename, content):
+    with open(filename, "w") as f:
+        f.write(content)
+
+
 def grep_value_from_file(filename, regex_pattern, group_num=0):
     regex = re.compile(regex_pattern)
     with open(filename, "r") as f:

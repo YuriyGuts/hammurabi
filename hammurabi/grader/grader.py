@@ -5,6 +5,7 @@ import sys
 import traceback
 import hammurabi.utils.confreader as confreader
 import hammurabi.grader.discovery as discovery
+import hammurabi.grader.reporting as reporting
 
 from hammurabi.grader.adapters import *
 from hammurabi.grader.model import *
@@ -22,6 +23,7 @@ def grade(args):
 
     try:
         for problem in scope.tasks:
+            print
             print "Judging problem: {problem.name}".format(**locals())
             print "=" * 75
 
@@ -170,4 +172,13 @@ def create_verifier(testrun):
 
 
 def produce_report(testruns):
-    pass
+    testrun_csv_log_location = os.path.join(testruns[0].testcase.problem.config.report_output_dir, "testruns.csv")
+    full_html_log_location = os.path.join(testruns[0].testcase.problem.config.report_output_dir, "report.html")
+
+    reporting.generate_testrun_log_csv(testruns, testrun_csv_log_location)
+    reporting.generate_full_log_html(testruns, full_html_log_location)
+
+    print
+    print "Reports:"
+    print "CSV log:", testrun_csv_log_location
+    print "Detailed HTML log:", full_html_log_location

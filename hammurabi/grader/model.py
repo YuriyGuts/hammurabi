@@ -1,4 +1,5 @@
 import time
+import traceback
 
 
 class Problem(object):
@@ -84,8 +85,6 @@ class TestRun(object):
         self.lean_end_time = self._get_timestamp()
 
     def get_judge_elapsed_milliseconds(self):
-        # if self.judge_start_time is None or self.judge_end_time is None:
-        #     return 0
         return self.judge_end_time - self.judge_start_time
 
     def get_lean_elapsed_milliseconds(self):
@@ -106,6 +105,9 @@ class TestRunResult(object):
     def __str__(self):
         return "[{self.status_code}] {self.status}, Score: {self.score}".format(**locals())
 
+    def format_details(self):
+        return None
+
 
 class TestRunCorrectAnswerResult(TestRunResult):
     def __init__(self):
@@ -118,11 +120,17 @@ class TestRunWrongAnswerResult(TestRunResult):
         self.expected = expected
         self.actual = actual
 
+    def format_details(self):
+        return "Expected: {self.expected}, Actual: {self.actual}".format(**locals())
+
 
 class TestRunRuntimeErrorResult(TestRunResult):
     def __init__(self, message):
         super(TestRunRuntimeErrorResult, self).__init__("R", "Runtime Error")
         self.message = message
+
+    def format_details(self):
+        return self.message
 
 
 class TestRunFormatErrorResult(TestRunResult):
@@ -130,17 +138,30 @@ class TestRunFormatErrorResult(TestRunResult):
         super(TestRunFormatErrorResult, self).__init__("F", "Invalid Output Format")
         self.exception = exception
 
+    def format_details(self):
+        if self.exception is None or len(self.exception) != 2:
+            return super(TestRunFormatErrorResult, self).format_details()
+        return traceback.format_tb(self.exception[2])
+
 
 class TestRunInternalErrorResult(TestRunResult):
     def __init__(self, exception):
         super(TestRunInternalErrorResult, self).__init__("X", "Judge Internal Error")
         self.exception = exception
 
+    def format_details(self):
+        if self.exception is None or len(self.exception) != 2:
+            return super(TestRunInternalErrorResult, self).format_details()
+        return traceback.format_tb(self.exception[2])
+
 
 class TestRunCompilationErrorResult(TestRunResult):
     def __init__(self, message):
         super(TestRunCompilationErrorResult, self).__init__("E", "Compilation Error")
         self.message = message
+
+    def format_details(self):
+        return self.message
 
 
 class TestRunSolutionMissingResult(TestRunResult):
@@ -152,6 +173,9 @@ class TestRunUnverifiedResult(TestRunResult):
     def __init__(self, message):
         super(TestRunUnverifiedResult, self).__init__("U", "Unverified")
         self.message = message
+
+    def format_details(self):
+        return self.message
 
 
 class TestRunTimeoutResult(TestRunResult):
