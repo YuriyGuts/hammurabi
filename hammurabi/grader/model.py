@@ -97,7 +97,7 @@ class TestRun(object):
 
 
 class TestRunResult(object):
-    def __init__(self, status_code, status, score=None):
+    def __init__(self, status_code, status, score=0):
         self.status_code = status_code
         self.status = status
         self.score = score
@@ -151,7 +151,7 @@ class TestRunInternalErrorResult(TestRunResult):
         if self.exception is None or len(self.exception) != 3:
             return super(TestRunInternalErrorResult, self).format_details()
         exc_type, exc, tb = self.exception
-        return '\n'.join([exc.message] + traceback.format_tb(tb))
+        return '\n'.join([str(exc_type), exc.message] + traceback.format_tb(tb))
 
 
 class TestRunCompilationErrorResult(TestRunResult):
