@@ -2,7 +2,6 @@ import csv
 import datetime
 import html
 import os
-import subprocess
 import hammurabi.utils.fileio as fileio
 
 from hammurabi.grader.model import *
@@ -37,43 +36,136 @@ def generate_testrun_log_csv(testruns, output_filename):
 
 
 def generate_matrix_report_csv(testruns, output_filename):
-    field_names = ["problem", "testcase"]
-    unique_problems = sorted(list(set([testrun.solution.problem.name for testrun in testruns])))
-    unique_authors = sorted(list(set([testrun.solution.author for testrun in testruns])))
-    field_names.extend(unique_authors)
+    headers, rows, scores, grand_totals = _get_matrix_report_data(testruns)
 
     with open(output_filename, "w") as csv_file:
-        writer = csv.DictWriter(csv_file, fieldnames=field_names)
+        writer = csv.DictWriter(csv_file, fieldnames=headers)
         writer.writeheader()
 
-        for problem_name in unique_problems:
-            unique_testcases = sorted(list(set([
-                testrun.testcase.name
-                for testrun in testruns
-                if testrun.solution.problem.name == problem_name
-            ])))
+        for row in rows:
+            row["problem"] = row["problem"].name
+            row["testcase"] = row["testcase"].name
 
-            for testcase_name in unique_testcases:
-                row = {
-                    "problem": problem_name,
-                    "testcase": testcase_name,
-                }
+            for key in row:
+                if isinstance(row[key], TestRunResult):
+                    row[key] = row[key].status_code
 
-                for author in unique_authors:
-                    testrun = [
-                        testrun
-                        for testrun in testruns
-                        if testrun.solution.author == author and testrun.testcase.name == testcase_name
-                    ]
-                    if len(testrun) > 0:
-                        row[author] = testrun[0].result.status_code
-                    else:
-                        row[author] = TestRunSolutionMissingResult().status_code
+            writer.writerow(row)
 
-                writer.writerow(row)
+
+def generate_matrix_report_html(testruns, output_filename):
+
+    def begin_table(headers, header_cell_class):
+        table_element = container.table(klass="table table-bordered text-center", style="width: auto;")
+        table_header = table_element.thead(newlines=True)
+
+        for header in headers:
+            width = "150px" if header in non_author_headers else "110px"
+            table_header.th(header,
+                klass="text-center {header_cell_class}".format(**locals()),
+                style="width: {width};".format(**locals())
+            )
+
+        table_body_element = table_element.tbody(newlines=True)
+        return table_body_element
+
+    def generate_summary_row(table_body_element, summary_data_row, cell_class):
+        subtotal_row = table_body_element.tr
+        for header in headers:
+            if header in non_author_headers:
+                subtotal_row.td(klass="{cell_class}".format(**locals()))
+            else:
+                total_score = summary_data_row[header]["total_score"]
+                maximum_score = summary_data_row[header]["maximum_score"]
+                ratio = summary_data_row[header]["ratio"]
+                subtotal = "{total_score} / {maximum_score} ({ratio:.0f}%)".format(**locals())
+                subtotal_row.td(klass="{cell_class}".format(**locals())).strong(subtotal)
+
+    headers, data_rows, scores, grand_totals = _get_matrix_report_data(testruns)
+    non_author_headers = ["problem", "testcase"]
+
+    doc = html.HTML("html")
+
+    head = doc.head()
+    css = fileio.read_entire_file(os.path.join(os.path.dirname(__file__), "resources", "report.css"))
+    style = head.style(type="text/css").raw_text(css)
+
+    body = doc.body(newlines=True)
+    container = body.div(klass="container")
+
+    report_header = container.div(klass="page-header")
+    report_header.h1("Solution Matrix Report")
+    now = datetime.datetime.now()
+    container.p("Last updated: {now:%Y-%m-%d %H:%M}".format(**locals()))
+
+    container.h3("Legend")
+    legend_table = container.table(klass="table table-bordered", style="width: auto;")
+    results = [
+        TestRunCorrectAnswerResult(),
+        TestRunWrongAnswerResult(),
+        TestRunTimeoutResult(),
+        TestRunRuntimeErrorResult(message=None),
+        TestRunFormatErrorResult(),
+        TestRunCompilationErrorResult(message=None),
+        TestRunSolutionMissingResult(),
+        TestRunInternalErrorResult(exception=None),
+    ]
+    for result in results:
+        legend_row = legend_table.tr
+        style = _get_contextual_style_by_result(result)
+        legend_row.td(
+            "{result.status_code}".format(**locals()),
+            klass="bg-{style} text-center".format(**locals()),
+            style="width: 50px;"
+        )
+        legend_row.td(
+            "{result.status}".format(**locals()),
+            klass="bg-{style}".format(**locals())
+        )
+
+    previous_problem = None
+    table_body = None
+
+    for (data_row_index, data_row) in enumerate(data_rows):
+        problem = data_row["problem"]
+        testcase = data_row["testcase"]
+
+        if problem != previous_problem:
+            problem_header = container.div(klass="page-header")
+            problem_header.h2("Problem: {problem.name}".format(**locals()))
+
+            previous_problem = problem
+            table_body = begin_table(headers, "bg-primary")
+
+        table_row = table_body.tr()
+        table_row.td(problem.name)
+        table_row.td(testcase.name)
+
+        for header in headers:
+            if isinstance(data_row[header], TestRunResult):
+                background = _get_contextual_style_by_result(data_row[header])
+                table_row.td(
+                    data_row[header].status_code,
+                    title=data_row[header].status,
+                    klass="bg-{background}".format(**locals())
+                )
+
+        if data_row_index == len(data_rows) - 1 or data_rows[data_row_index + 1]["problem"] != data_rows[data_row_index]["problem"]:
+            generate_summary_row(table_body, scores[problem.name], "bg-primary")
+
+    grand_total_header = container.div(klass="page-header")
+    grand_total_header.h1("Grand Total")
+
+    grand_total_headers = [header if header not in non_author_headers else "" for header in headers]
+    grand_total_table_body = begin_table(headers, "bg-primary")
+    generate_summary_row(grand_total_table_body, grand_totals, "bg-info")
+
+    html_content = str(doc)
+    fileio.write_entire_file(output_filename, html_content)
 
 
 def generate_full_log_html(testruns, output_filename):
+
     def create_testcase_summary_row(element, category, value):
         row = element.tr
         row.td(category)
@@ -146,6 +238,83 @@ def generate_full_log_html(testruns, output_filename):
     fileio.write_entire_file(output_filename, html_content)
 
 
+def _get_matrix_report_data(testruns):
+    rows = []
+    scores = {}
+    max_score_per_problem = {}
+    grand_totals = {}
+
+    headers = ["problem", "testcase"]
+    unique_authors = sorted(list(set([testrun.solution.author for testrun in testruns])))
+    unique_problems = sorted(list(set([testrun.solution.problem.name for testrun in testruns])))
+    headers.extend(unique_authors)
+
+    for problem_name in unique_problems:
+        scores[problem_name] = {}
+        max_score_per_problem[problem_name] = 0
+
+        for author_name in unique_authors:
+            scores[problem_name][author_name] = {}
+            scores[problem_name][author_name]["total_score"] = 0
+            grand_totals[author_name] = {}
+            grand_totals[author_name]["total_score"] = 0
+            grand_totals[author_name]["maximum_score"] = 0
+
+    for problem_name in unique_problems:
+        unique_testcases = sorted(list(set([
+            testrun.testcase.name
+            for testrun in testruns
+            if testrun.solution.problem.name == problem_name
+        ])))
+
+        for testcase_name in unique_testcases:
+            row = {
+                "problem": [
+                    testrun.solution.problem
+                    for testrun in testruns
+                    if testrun.solution.problem.name == problem_name
+                ][0],
+                "testcase": [
+                    testrun.testcase
+                    for testrun in testruns
+                    if testrun.testcase.name == testcase_name and testrun.solution.problem.name == problem_name
+                ][0],
+            }
+
+            max_score_per_problem[row["problem"].name] += row["testcase"].score
+
+            for author_name in unique_authors:
+                testrun = [
+                    testrun
+                    for testrun in testruns
+                    if testrun.solution.author == author_name and testrun.testcase.name == testcase_name and testrun.solution.problem.name == problem_name
+                ]
+
+                if len(testrun) > 0:
+                    row[author_name] = testrun[0].result
+                    scores[problem_name][author_name]["total_score"] += testrun[0].result.score
+                else:
+                    missing_result = TestRunSolutionMissingResult()
+                    missing_result.score = 0
+                    row[author_name] = missing_result
+
+            rows.append(row)
+
+    for problem_name in scores:
+        for author_name in scores[problem_name]:
+            score_dict = scores[problem_name][author_name]
+            score_dict["maximum_score"] = max_score_per_problem[problem_name]
+            score_dict["ratio"] = score_dict["total_score"] * 100.0 / score_dict["maximum_score"]
+
+            grand_totals[author_name]["total_score"] += score_dict["total_score"]
+            grand_totals[author_name]["maximum_score"] += score_dict["maximum_score"]
+
+    for author_name in grand_totals:
+        grand_totals[author_name]["ratio"] = grand_totals[author_name]["total_score"] * 100.0 / grand_totals[author_name]["maximum_score"]
+
+    return headers, rows, scores, grand_totals
+
+
 def _get_readable_datetime(ms_timestamp):
     dt = datetime.datetime.fromtimestamp(ms_timestamp / 1000.0)
     return dt.strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -158,7 +327,7 @@ def _get_contextual_style_by_result(testrun_result):
         TestRunFormatErrorResult: "warning",
         TestRunInternalErrorResult: "warning",
         TestRunRuntimeErrorResult: "warning",
-        TestRunSolutionMissingResult: "default",
+        TestRunSolutionMissingResult: "warning",
         TestRunTimeoutResult: "info",
         TestRunUnverifiedResult: "primary",
         TestRunWrongAnswerResult: "danger",
