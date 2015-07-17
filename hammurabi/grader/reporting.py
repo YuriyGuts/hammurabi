@@ -60,7 +60,12 @@ def generate_matrix_report_html(testruns, output_filename):
         table_header = table_element.thead(newlines=True)
 
         for header in headers:
-            width = "150px" if header in non_author_headers else "110px"
+            widths = {
+                "problem": "150px",
+                "testcase": "100px"
+            }
+
+            width = widths[header] if header in widths else "125px"
             table_header.th(header,
                 klass="text-center {header_cell_class}".format(**locals()),
                 style="width: {width};".format(**locals())
@@ -85,8 +90,10 @@ def generate_matrix_report_html(testruns, output_filename):
     non_author_headers = ["problem", "testcase"]
 
     doc = html.HTML("html")
+    report_title = "Progress Matrix Report"
 
     head = doc.head()
+    head.title(report_title)
     css = fileio.read_entire_file(os.path.join(os.path.dirname(__file__), "resources", "report.css"))
     style = head.style(type="text/css").raw_text(css)
 
@@ -94,7 +101,7 @@ def generate_matrix_report_html(testruns, output_filename):
     container = body.div(klass="container")
 
     report_header = container.div(klass="page-header")
-    report_header.h1("Solution Matrix Report")
+    report_header.h1(report_title)
     now = datetime.datetime.now()
     container.p("Last updated: {now:%Y-%m-%d %H:%M}".format(**locals()))
 
@@ -156,7 +163,6 @@ def generate_matrix_report_html(testruns, output_filename):
     grand_total_header = container.div(klass="page-header")
     grand_total_header.h1("Grand Total")
 
-    grand_total_headers = [header if header not in non_author_headers else "" for header in headers]
     grand_total_table_body = begin_table(headers, "bg-primary")
     generate_summary_row(grand_total_table_body, grand_totals, "bg-info")
 
@@ -187,13 +193,20 @@ def generate_full_log_html(testruns, output_filename):
     testruns = sorted(testruns, key=lambda tr: (tr.testcase.problem.name, tr.solution.author, tr.judge_start_time))
 
     doc = html.HTML("html")
+    report_title = "Solution Execution Log"
 
     head = doc.head()
+    head.title(report_title)
     css = fileio.read_entire_file(os.path.join(os.path.dirname(__file__), "resources", "report.css"))
     style = head.style(type="text/css").raw_text(css)
 
     body = doc.body(newlines=True)
     container = body.div(klass="container")
+
+    report_header = container.div(klass="page-header")
+    report_header.h1(report_title)
+    now = datetime.datetime.now()
+    container.p("Last updated: {now:%Y-%m-%d %H:%M}".format(**locals()))
 
     previous_problem = None
     previous_author = None
@@ -202,11 +215,11 @@ def generate_full_log_html(testruns, output_filename):
         if testrun.testcase.problem.name != previous_problem:
             previous_problem = testrun.testcase.problem.name
             problem_header = container.div(klass="page-header")
-            problem_header.h1("Problem: {testrun.testcase.problem.name}".format(**locals()))
+            problem_header.h2("Problem: {testrun.testcase.problem.name}".format(**locals()))
 
         if testrun.solution.author != previous_author:
             previous_author = testrun.solution.author
-            solution_header = container.h2("Solution: {testrun.solution.author}".format(**locals()))
+            solution_header = container.h3("Solution: {testrun.solution.author}".format(**locals()))
             solution_header.small(" (Problem: {testrun.testcase.problem.name}, Language: {testrun.solution.language})".format(**locals()))
 
         result_style = _get_contextual_style_by_result(testrun.result)
