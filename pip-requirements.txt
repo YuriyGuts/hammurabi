@@ -1,0 +1,4 @@
+Django==1.8.3
+argparse==1.2.1
+html==1.16
+psutil==1.2.1
