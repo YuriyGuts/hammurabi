@@ -134,14 +134,12 @@ class TestRunRuntimeErrorResult(TestRunResult):
 
 
 class TestRunFormatErrorResult(TestRunResult):
-    def __init__(self, exception=None):
+    def __init__(self, message):
         super(TestRunFormatErrorResult, self).__init__("F", "Invalid Output Format")
-        self.exception = exception
+        self.message = message
 
     def format_details(self):
-        if self.exception is None or len(self.exception) != 2:
-            return super(TestRunFormatErrorResult, self).format_details()
-        return traceback.format_tb(self.exception[2])
+        return self.message
 
 
 class TestRunInternalErrorResult(TestRunResult):
@@ -150,9 +148,10 @@ class TestRunInternalErrorResult(TestRunResult):
         self.exception = exception
 
     def format_details(self):
-        if self.exception is None or len(self.exception) != 2:
+        if self.exception is None or len(self.exception) != 3:
             return super(TestRunInternalErrorResult, self).format_details()
-        return traceback.format_tb(self.exception[2])
+        exc_type, exc, tb = self.exception
+        return '\n'.join([exc.message] + traceback.format_tb(tb))
 
 
 class TestRunCompilationErrorResult(TestRunResult):

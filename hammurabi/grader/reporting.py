@@ -105,7 +105,7 @@ def generate_matrix_report_html(testruns, output_filename):
         TestRunWrongAnswerResult(),
         TestRunTimeoutResult(),
         TestRunRuntimeErrorResult(message=None),
-        TestRunFormatErrorResult(),
+        TestRunFormatErrorResult(message=None),
         TestRunCompilationErrorResult(message=None),
         TestRunSolutionMissingResult(),
         TestRunInternalErrorResult(exception=None),

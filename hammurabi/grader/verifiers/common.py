@@ -27,8 +27,8 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
                     try:
                         given_line = given_answer_file.readline()
                     except:
-                        e = sys.exc_info()
-                        testrun.result = TestRunFormatErrorResult(exception=e)
+                        exc_type, exc, tb = sys.exc_info()
+                        testrun.result = TestRunFormatErrorResult(message=exc.message)
                         return False
 
                     if len(correct_line.strip()) > 0:
@@ -39,8 +39,8 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
                                 testrun.result = TestRunWrongAnswerResult(expected=correct_items, actual=given_items)
                                 return False
                         except:
-                            e = sys.exc_info()
-                            testrun.result = TestRunFormatErrorResult(exception=e)
+                            exc_type, exc, tb = sys.exc_info()
+                            testrun.result = TestRunFormatErrorResult(message=exc.message)
                             return False
 
         testrun.result = TestRunCorrectAnswerResult()

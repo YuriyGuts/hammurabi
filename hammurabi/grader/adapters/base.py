@@ -111,7 +111,8 @@ class BaseSolutionAdapter(object):
                 error_text = fileio.read_entire_file(testrun.stderr_filename)
                 result = TestRunRuntimeErrorResult(message=error_text)
             else:
-                result = TestRunFormatErrorResult()
+                msg = "Output file '{self.solution.problem.output_filename}' is empty or missing.".format(**locals())
+                result = TestRunFormatErrorResult(msg)
             raise TestRunPrematureTerminationError(result)
 
         shutil.move(given_answer_filename, testrun.answer_filename)
