@@ -7,13 +7,22 @@ import hammurabi.utils.fileio as fileio
 from hammurabi.grader.model import *
 
 
-def generate_testrun_log_csv(testruns, output_filename):
+report_metadata = {
+    "testrun-log-csv": ["testruns.csv", "Execution Log [CSV]"],
+    "matrix-csv": ["matrix.csv", "Matrix Report [CSV]"],
+    "matrix-html": ["report-matrix.html", "Matrix Report [HTML]"],
+    "full-html": ["report-full.html", "Execution Log [HTML]"],
+}
+
+
+def generate_testrun_log_csv(testruns, output_dir):
+    report_filename = os.path.join(output_dir, report_metadata["testrun-log-csv"][0])
     testruns = sorted(testruns, key=lambda tr: tr.judge_start_time)
 
-    with open(output_filename, "w") as csv_file:
+    with open(report_filename, "w") as csv_file:
         field_names = ["start_time", "end_time", "problem_name", "solution_author", "solution_language",
                        "testcase_name", "testcase_score", "result_status", "result_description", "score",
-                       "solution_time", "overall_time"]
+                       "solution_time", "overall_time", "details"]
 
         writer = csv.DictWriter(csv_file, fieldnames=field_names)
         writer.writeheader()
@@ -31,14 +40,18 @@ def generate_testrun_log_csv(testruns, output_filename):
                 "result_description": testrun.result.status,
                 "score": testrun.result.score,
                 "solution_time": testrun.get_lean_elapsed_milliseconds(),
-                "overall_time": testrun.get_judge_elapsed_milliseconds()
+                "overall_time": testrun.get_judge_elapsed_milliseconds(),
+                "details": _csv_escape_string(str(testrun.result.format_details()))[:1000],
             })
 
+    return report_filename
 
-def generate_matrix_report_csv(testruns, output_filename):
+
+def generate_matrix_report_csv(testruns, output_dir):
+    report_filename = os.path.join(output_dir, report_metadata["matrix-csv"][0])
     headers, rows, scores, grand_totals = _get_matrix_report_data(testruns)
 
-    with open(output_filename, "w") as csv_file:
+    with open(report_filename, "w") as csv_file:
         writer = csv.DictWriter(csv_file, fieldnames=headers)
         writer.writeheader()
 
@@ -52,8 +65,10 @@ def generate_matrix_report_csv(testruns, output_filename):
 
             writer.writerow(row)
 
+    return report_filename
 
-def generate_matrix_report_html(testruns, output_filename):
+
+def generate_matrix_report_html(testruns, output_dir):
 
     def begin_table(headers, header_cell_class):
         table_element = container.table(klass="table table-bordered text-center", style="width: auto;")
@@ -86,8 +101,10 @@ def generate_matrix_report_html(testruns, output_filename):
                 subtotal = "{total_score} / {maximum_score} ({ratio:.0f}%)".format(**locals())
                 subtotal_row.td(klass="{cell_class}".format(**locals())).strong(subtotal)
 
+    report_filename = os.path.join(output_dir, report_metadata["matrix-html"][0])
     headers, data_rows, scores, grand_totals = _get_matrix_report_data(testruns)
     non_author_headers = ["problem", "testcase"]
+    full_report_link = report_metadata["full-html"][0]
 
     doc = html.HTML("html")
     report_title = "Progress Matrix Report"
@@ -99,6 +116,7 @@ def generate_matrix_report_html(testruns, output_filename):
 
     body = doc.body(newlines=True)
     container = body.div(klass="container")
+    _create_html_report_cross_reference_section(container)
 
     report_header = container.div(klass="page-header")
     report_header.h1(report_title)
@@ -149,13 +167,18 @@ def generate_matrix_report_html(testruns, output_filename):
         table_row.td(testcase.name)
 
         for header in headers:
-            if isinstance(data_row[header], TestRunResult):
-                background = _get_contextual_style_by_result(data_row[header])
-                table_row.td(
-                    data_row[header].status_code,
-                    title=data_row[header].status,
-                    klass="bg-{background}".format(**locals())
-                )
+            author = header
+            if isinstance(data_row[author], TestRunResult):
+                result = data_row[author]
+                background = _get_contextual_style_by_result(result)
+                cell = table_row.td(klass="bg-{background} result-link-cell".format(**locals()))
+
+                testcase_log_link = "{full_report_link}#{problem.name}-{author}-{testcase.name}".format(**locals())
+                result_details = result.format_details()
+                result_details = "" if result_details is None else str(result.format_details())[:1000]
+                tooltip = "{result.status}\n\n{result_details}".format(**locals())
+
+                cell.a(result.status_code, href=testcase_log_link, title=tooltip)
 
         if data_row_index == len(data_rows) - 1 or data_rows[data_row_index + 1]["problem"] != data_rows[data_row_index]["problem"]:
             generate_summary_row(table_body, scores[problem.name], "bg-primary")
@@ -167,10 +190,11 @@ def generate_matrix_report_html(testruns, output_filename):
     generate_summary_row(grand_total_table_body, grand_totals, "bg-info")
 
     html_content = str(doc)
-    fileio.write_entire_file(output_filename, html_content)
+    fileio.write_entire_file(report_filename, html_content)
+    return report_filename
 
 
-def generate_full_log_html(testruns, output_filename):
+def generate_full_log_html(testruns, output_dir):
 
     def create_testcase_summary_row(element, category, value):
         row = element.tr
@@ -190,6 +214,7 @@ def generate_full_log_html(testruns, output_filename):
         else:
             element.p(header).em(" none.")
 
+    report_filename = os.path.join(output_dir, report_metadata["full-html"][0])
     testruns = sorted(testruns, key=lambda tr: (tr.testcase.problem.name, tr.solution.author, tr.judge_start_time))
 
     doc = html.HTML("html")
@@ -202,6 +227,7 @@ def generate_full_log_html(testruns, output_filename):
 
     body = doc.body(newlines=True)
     container = body.div(klass="container")
+    _create_html_report_cross_reference_section(container)
 
     report_header = container.div(klass="page-header")
     report_header.h1(report_title)
@@ -224,6 +250,9 @@ def generate_full_log_html(testruns, output_filename):
 
         result_style = _get_contextual_style_by_result(testrun.result)
         testcase_header_text = "Testcase: {testrun.testcase.name}".format(**locals())
+        anchor_name = "{testrun.testcase.problem.name}-{testrun.solution.author}-{testrun.testcase.name}".format(**locals())
+        container.a("", name=anchor_name)
+
         testcase_panel = container.div(klass="panel panel-{result_style}".format(**locals()))
         testcase_panel_header = testcase_panel.div(klass="panel-heading").h3(testcase_header_text, klass="panel-title")
         testcase_panel_content = testcase_panel.div(klass="panel-body")
@@ -248,7 +277,8 @@ def generate_full_log_html(testruns, output_filename):
         dump_file(testcase_panel_content, "Standard error stream:", testrun.stderr_filename)
 
     html_content = str(doc)
-    fileio.write_entire_file(output_filename, html_content)
+    fileio.write_entire_file(report_filename, html_content)
+    return report_filename
 
 
 def _get_matrix_report_data(testruns):
@@ -328,6 +358,14 @@ def _get_matrix_report_data(testruns):
     return headers, rows, scores, grand_totals
 
 
+def _create_html_report_cross_reference_section(element):
+    link_row = element.div(klass="row cross-reference-row")
+    for report_codename in ["matrix-html", "full-html", "matrix-csv", "testrun-log-csv"]:
+        filename, report_name = report_metadata[report_codename]
+        cell = link_row.div(klass="col-md-3")
+        cell.a(report_name, href=filename)
+
+
 def _get_readable_datetime(ms_timestamp):
     dt = datetime.datetime.fromtimestamp(ms_timestamp / 1000.0)
     return dt.strftime('%Y-%m-%d %H:%M:%S.%f')
@@ -347,3 +385,7 @@ def _get_contextual_style_by_result(testrun_result):
     }
     result_type = type(testrun_result)
     return "default" if result_type not in contextual_style_by_result else contextual_style_by_result[result_type]
+
+
+def _csv_escape_string(string):
+    return ''.join([i if 32 < ord(i) < 128 else ' ' for i in string])
