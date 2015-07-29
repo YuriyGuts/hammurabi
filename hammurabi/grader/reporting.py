@@ -175,8 +175,8 @@ def generate_matrix_report_html(testruns, output_dir):
 
                 testcase_log_link = "{full_report_link}#{problem.name}-{author}-{testcase.name}".format(**locals())
                 result_details = result.format_details()
-                result_details = "" if result_details is None else str(result.format_details())[:1000]
-                tooltip = "{result.status}\n\n{result_details}".format(**locals())
+                result_details = "" if result_details is None else "\n\n" + str(result.format_details())[:1000]
+                tooltip = "{result.status}{result_details}".format(**locals())
 
                 cell.a(result.status_code, href=testcase_log_link, title=tooltip)
 
@@ -208,7 +208,10 @@ def generate_full_log_html(testruns, output_dir):
         dump_preformatted_text(element, header, content)
 
     def dump_preformatted_text(element, header, content):
+        truncate_limit = 1024;
         if content is not None and len(content.strip()) > 0:
+            if len(content) > truncate_limit:
+                content = content[1:truncate_limit] + "[content too long, truncated]"
             element.p(header)
             element.pre(content)
         else:
