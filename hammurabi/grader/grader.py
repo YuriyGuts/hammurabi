@@ -39,7 +39,7 @@ def grade(args):
     except KeyboardInterrupt:
         pass
 
-    produce_report(testruns)
+    produce_report(config, testruns)
 
 
 def read_config():
@@ -171,8 +171,8 @@ def create_verifier(testrun):
     return verifier()
 
 
-def produce_report(testruns):
-    report_dir = testruns[0].testcase.problem.config.report_output_dir
+def produce_report(config, testruns):
+    report_dir = config.report_output_dir
 
     testrun_csv_log_location = reporting.generate_testrun_log_csv(testruns, report_dir)
     matrix_csv_report_location = reporting.generate_matrix_report_csv(testruns, report_dir)
