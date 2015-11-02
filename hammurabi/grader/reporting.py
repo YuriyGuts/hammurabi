@@ -211,7 +211,7 @@ def generate_full_log_html(testruns, output_dir):
         truncate_limit = 1024;
         if content is not None and len(content.strip()) > 0:
             if len(content) > truncate_limit:
-                content = content[1:truncate_limit] + "[content too long, truncated]"
+                content = content[:truncate_limit] + "[content too long, truncated]"
             element.p(header)
             element.pre(content)
         else:
