@@ -474,8 +474,8 @@ def _get_heatmap_report_data(testruns):
     def adjust_time_for_language(time, language):
         bootstrap_allowances = {
             "cpp": 0.0,
-            "csharp": 50,
-            "java": 100,
+            "csharp": 0,
+            "java": 30,
             "javascript": 0,
             "php": 0,
             "python": 0,
@@ -486,7 +486,7 @@ def _get_heatmap_report_data(testruns):
             "cpp": 1.0,
             "csharp": 1.75,
             "java": 2.0,
-            "javascript": 4.5,
+            "javascript": 5.0,
             "php": 4.5,
             "python": 5.0,
             "ruby": 5.0,
