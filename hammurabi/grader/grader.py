@@ -179,6 +179,7 @@ def produce_report(config, testruns):
     testrun_csv_log_location = reporting.generate_testrun_log_csv(testruns, report_dir)
     matrix_csv_report_location = reporting.generate_matrix_report_csv(testruns, report_dir)
     matrix_html_report_location = reporting.generate_matrix_report_html(testruns, report_dir)
+    heatmap_html_report_location = reporting.generate_heatmap_report_html(testruns, report_dir)
     full_html_log_location = reporting.generate_full_log_html(testruns, report_dir)
 
     print
@@ -186,4 +187,5 @@ def produce_report(config, testruns):
     print "CSV log:", testrun_csv_log_location
     print "Matrix CSV report:", matrix_csv_report_location
     print "Matrix HTML report:", matrix_html_report_location
+    print "Heatmap HTML report:", heatmap_html_report_location
     print "Detailed HTML log:", full_html_log_location
