@@ -225,7 +225,7 @@ def generate_heatmap_report_html(testruns, output_dir):
         return table_body_element
 
     def get_heat_color_by_percentile(percentile):
-        (r, g, b) = colorsys.hsv_to_rgb(0.3 * (1.0 - percentile) + 0.048, 0.25, 0.9)
+        (r, g, b) = colorsys.hsv_to_rgb(0.3 * (1.0 - percentile) + 0.048, 0.2, 0.95)
         return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
 
     def generate_summary_row(table_body_element, summary_data_row, cell_class):
