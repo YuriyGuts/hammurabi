@@ -495,6 +495,9 @@ def _get_heatmap_report_data(testruns):
         return (time - bootstrap_allowances[language]) / runtime_slowness_factors[language]
 
     def percentile(data, value):
+        if len(data) <= 1:
+            return 0.0
+
         nearest_value_index = min(range(len(data)), key=lambda i: abs(data[i] - value))
         return nearest_value_index * 1.0 / (len(data) - 1)
 
