@@ -212,14 +212,21 @@ def generate_heatmap_report_html(testruns, output_dir):
 
             if header not in ("problem", "testcase"):
                 author = header
-                header_text = author if solution_languages[problem.name][author] is None else author + "\n" + solution_languages[problem.name][author]
+                solution_language = solution_languages[problem.name][author]
+                cell = table_header.th(
+                    klass="text-center {header_cell_class}".format(**locals()),
+                    style="width: {width};".format(**locals())
+                )
+                strong = cell.strong(author)
+                if solution_language is not None:
+                    cell.br()
+                    strong = cell.strong(solution_language)
             else:
                 header_text = header
-
-            table_header.th(header_text,
-                klass="text-center {header_cell_class}".format(**locals()),
-                style="width: {width};".format(**locals())
-            )
+                table_header.th(header_text,
+                    klass="text-center {header_cell_class}".format(**locals()),
+                    style="width: {width};".format(**locals())
+                )
 
         table_body_element = table_element.tbody(newlines=True)
         return table_body_element
@@ -230,17 +237,22 @@ def generate_heatmap_report_html(testruns, output_dir):
 
     def generate_summary_row(table_body_element, summary_data_row, cell_class):
         subtotal_row = table_body_element.tr
-        subtotal_row.td(colspan="2", klass="{cell_class}".format(**locals())).strong("mean / stddev")
+        cell = subtotal_row.td(colspan="2", klass="{cell_class}".format(**locals()))
+        strong = cell.strong("mean")
+        cell.br()
+        strong = cell.strong("stddev")
 
         for header in headers:
             if header not in non_author_headers:
                 mean = summary_data_row[header]["mean"]
                 stddev = summary_data_row[header]["stddev"]
+                cell = subtotal_row.td(klass="{cell_class}".format(**locals()))
                 if mean is not None and stddev is not None:
-                    subtotal = "{mean:.0f} / {stddev:.0f}".format(**locals())
+                    strong = cell.strong("{mean:.0f}".format(**locals()))
+                    cell.br()
+                    strong = cell.strong("{mean:.0f}".format(**locals()))
                 else:
-                    subtotal = "NA / NA"
-                subtotal_row.td(klass="{cell_class}".format(**locals())).strong(subtotal)
+                    cell.strong("N/A")
 
     report_filename = os.path.join(output_dir, report_metadata["heatmap-html"][0])
     headers, data_rows, subtotals, solution_languages = _get_heatmap_report_data(testruns)
