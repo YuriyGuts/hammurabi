@@ -250,7 +250,7 @@ def generate_heatmap_report_html(testruns, output_dir):
                 if mean is not None and stddev is not None:
                     strong = cell.strong("{mean:.0f}".format(**locals()))
                     cell.br()
-                    strong = cell.strong("{mean:.0f}".format(**locals()))
+                    strong = cell.strong("{stddev:.0f}".format(**locals()))
                 else:
                     cell.strong("N/A")
 
