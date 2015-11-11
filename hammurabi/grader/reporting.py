@@ -224,12 +224,26 @@ def generate_heatmap_report_html(testruns, output_dir):
         table_body_element = table_element.tbody(newlines=True)
         return table_body_element
 
-    def _get_heat_color_by_percentile(percentile):
+    def get_heat_color_by_percentile(percentile):
         (r, g, b) = colorsys.hsv_to_rgb(0.3 * (1.0 - percentile) + 0.048, 0.25, 0.9)
         return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
 
+    def generate_summary_row(table_body_element, summary_data_row, cell_class):
+        subtotal_row = table_body_element.tr
+        subtotal_row.td(colspan="2", klass="{cell_class}".format(**locals())).strong("mean / stddev")
+
+        for header in headers:
+            if header not in non_author_headers:
+                mean = summary_data_row[header]["mean"]
+                stddev = summary_data_row[header]["stddev"]
+                if mean is not None and stddev is not None:
+                    subtotal = "{mean:.0f} / {stddev:.0f}".format(**locals())
+                else:
+                    subtotal = "NA / NA"
+                subtotal_row.td(klass="{cell_class}".format(**locals())).strong(subtotal)
+
     report_filename = os.path.join(output_dir, report_metadata["heatmap-html"][0])
-    headers, data_rows, solution_languages = _get_heatmap_report_data(testruns)
+    headers, data_rows, subtotals, solution_languages = _get_heatmap_report_data(testruns)
     non_author_headers = ["problem", "testcase"]
     full_report_link = report_metadata["full-html"][0]
 
@@ -275,14 +289,15 @@ def generate_heatmap_report_html(testruns, output_dir):
 
             testrun = record["testrun"]
             if testrun is None:
+                background = "#F2F2F2"
                 text = TestRunSolutionMissingResult().status_code
                 tooltip = TestRunSolutionMissingResult().status
             else:
                 if record["is_valid_for_heatmap"]:
-                    background = _get_heat_color_by_percentile(record["percentile"])
-                    lean_time = testrun.get_lean_elapsed_milliseconds()
+                    background = get_heat_color_by_percentile(record["percentile"])
+                    raw_time = record["raw_time"]
                     adjusted_time = record["adjusted_time"]
-                    text = "{lean_time}".format(**locals())
+                    text = "{raw_time}".format(**locals())
                     tooltip = "Adjusted time: {adjusted_time}".format(**locals())
                 else:
                     background = "#F2F2F2"
@@ -294,6 +309,9 @@ def generate_heatmap_report_html(testruns, output_dir):
             cell = table_row.td(klass="result-link-cell heatmap-cell", style="background-color: {background}".format(**locals()))
             testcase_log_link = "{full_report_link}#{problem.name}-{author}-{testcase.name}".format(**locals())
             cell.a(text, href=testcase_log_link, title=tooltip)
+
+        if data_row_index == len(data_rows) - 1 or data_rows[data_row_index + 1]["problem"] != data_rows[data_row_index]["problem"]:
+            generate_summary_row(table_body, subtotals[problem.name], "bg-primary")
 
     grand_total_header = container.div(klass="page-header")
 
@@ -501,6 +519,15 @@ def _get_heatmap_report_data(testruns):
         nearest_value_index = min(range(len(data)), key=lambda i: abs(data[i] - value))
         return nearest_value_index * 1.0 / (len(data) - 1)
 
+    def mean_stddev(data):
+        try:
+            mean = sum(data) * 1.0 / len(data)
+            variance = sum([(value - mean) ** 2 for value in data]) / len(data)
+            stddev = variance ** 0.5
+            return mean, stddev
+        except:
+            return None, None
+
     rows = []
 
     headers = ["problem", "testcase"]
@@ -554,6 +581,7 @@ def _get_heatmap_report_data(testruns):
 
                 row[author_name]["testrun"] = None
                 row[author_name]["percentile"] = -1
+                row[author_name]["raw_time"] = 0
                 row[author_name]["adjusted_time"] = 0
                 row[author_name]["is_valid_for_heatmap"] = False
 
@@ -566,14 +594,37 @@ def _get_heatmap_report_data(testruns):
 
                 row[author_name]["testrun"] = testrun
                 if testrun is not None and isinstance(testrun.result, TestRunCorrectAnswerResult):
-                    adjusted_time = adjust_time_for_language(testrun.get_lean_elapsed_milliseconds(), testrun.solution.language)
+                    raw_time = testrun.get_lean_elapsed_milliseconds()
+                    adjusted_time = adjust_time_for_language(raw_time, testrun.solution.language)
                     row[author_name]["percentile"] = percentile(timings_per_problem[problem_name], adjusted_time)
+                    row[author_name]["raw_time"] = raw_time
                     row[author_name]["adjusted_time"] = adjusted_time
                     row[author_name]["is_valid_for_heatmap"] = True
 
             rows.append(row)
 
-    return headers, rows, solution_languages
+    subtotals = {}
+    for problem_name in unique_problems:
+        results_per_problem = [
+            result
+            for result in rows
+            if result["problem"].name == problem_name
+        ]
+
+        subtotals[problem_name] = {}
+        for author_name in unique_authors:
+            subtotals[problem_name][author_name] = {}
+
+            raw_times = [result[author_name]["raw_time"]
+                for result in results_per_problem
+                if result[author_name]["is_valid_for_heatmap"]
+            ]
+            mean, stddev = mean_stddev(raw_times)
+
+            subtotals[problem_name][author_name]["mean"] = mean
+            subtotals[problem_name][author_name]["stddev"] = stddev
+
+    return headers, rows, subtotals, solution_languages
 
 
 def _create_html_report_cross_reference_section(element):
