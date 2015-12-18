@@ -17,8 +17,8 @@ report_metadata = {
 }
 
 
-def generate_testrun_log_csv(testruns, output_dir):
-    report_filename = os.path.join(output_dir, report_metadata["testrun-log-csv"][0])
+def generate_testrun_log_csv(testruns, config):
+    report_filename = os.path.join(config.report_output_dir, report_metadata["testrun-log-csv"][0])
     testruns = sorted(testruns, key=lambda tr: tr.judge_start_time)
 
     with open(report_filename, "w") as csv_file:
@@ -49,8 +49,8 @@ def generate_testrun_log_csv(testruns, output_dir):
     return report_filename
 
 
-def generate_matrix_report_csv(testruns, output_dir):
-    report_filename = os.path.join(output_dir, report_metadata["matrix-csv"][0])
+def generate_matrix_report_csv(testruns, config):
+    report_filename = os.path.join(config.report_output_dir, report_metadata["matrix-csv"][0])
     headers, rows, scores, grand_totals = _get_matrix_report_data(testruns)
 
     with open(report_filename, "w") as csv_file:
@@ -70,7 +70,7 @@ def generate_matrix_report_csv(testruns, output_dir):
     return report_filename
 
 
-def generate_matrix_report_html(testruns, output_dir):
+def generate_matrix_report_html(testruns, config):
 
     def begin_table(headers, header_cell_class):
         table_element = container.table(klass="table table-bordered text-center", style="width: auto;")
@@ -103,7 +103,7 @@ def generate_matrix_report_html(testruns, output_dir):
                 subtotal = "{total_score} / {maximum_score} ({ratio:.0f}%)".format(**locals())
                 subtotal_row.td(klass="{cell_class}".format(**locals())).strong(subtotal)
 
-    report_filename = os.path.join(output_dir, report_metadata["matrix-html"][0])
+    report_filename = os.path.join(config.report_output_dir, report_metadata["matrix-html"][0])
     headers, data_rows, scores, grand_totals = _get_matrix_report_data(testruns)
     non_author_headers = ["problem", "testcase"]
     full_report_link = report_metadata["full-html"][0]
@@ -122,6 +122,8 @@ def generate_matrix_report_html(testruns, output_dir):
 
     report_header = container.div(klass="page-header")
     report_header.h1(report_title)
+    _create_banner_section(container, config)
+
     now = datetime.datetime.now()
     container.p("Last updated: {now:%Y-%m-%d %H:%M}".format(**locals()))
 
@@ -196,7 +198,7 @@ def generate_matrix_report_html(testruns, output_dir):
     return report_filename
 
 
-def generate_heatmap_report_html(testruns, output_dir):
+def generate_heatmap_report_html(testruns, config):
 
     def begin_table(problem, headers, header_cell_class):
         table_element = container.table(klass="table table-bordered text-center", style="width: auto;")
@@ -254,7 +256,7 @@ def generate_heatmap_report_html(testruns, output_dir):
                 else:
                     cell.strong("N/A")
 
-    report_filename = os.path.join(output_dir, report_metadata["heatmap-html"][0])
+    report_filename = os.path.join(config.report_output_dir, report_metadata["heatmap-html"][0])
     headers, data_rows, subtotals, solution_languages = _get_heatmap_report_data(testruns)
     non_author_headers = ["problem", "testcase"]
     full_report_link = report_metadata["full-html"][0]
@@ -273,6 +275,8 @@ def generate_heatmap_report_html(testruns, output_dir):
 
     report_header = container.div(klass="page-header")
     report_header.h1(report_title)
+    _create_banner_section(container, config)
+
     now = datetime.datetime.now()
     container.p("Last updated: {now:%Y-%m-%d %H:%M}".format(**locals()))
 
@@ -332,7 +336,7 @@ def generate_heatmap_report_html(testruns, output_dir):
     return report_filename
 
 
-def generate_full_log_html(testruns, output_dir):
+def generate_full_log_html(testruns, config):
 
     def create_testcase_summary_row(element, category, value):
         row = element.tr
@@ -355,7 +359,7 @@ def generate_full_log_html(testruns, output_dir):
         else:
             element.p(header).em(" none.")
 
-    report_filename = os.path.join(output_dir, report_metadata["full-html"][0])
+    report_filename = os.path.join(config.report_output_dir, report_metadata["full-html"][0])
     testruns = sorted(testruns, key=lambda tr: (tr.testcase.problem.name, tr.solution.author, tr.judge_start_time))
 
     doc = html.HTML("html")
@@ -372,6 +376,8 @@ def generate_full_log_html(testruns, output_dir):
 
     report_header = container.div(klass="page-header")
     report_header.h1(report_title)
+    _create_banner_section(container, config)
+
     now = datetime.datetime.now()
     container.p("Last updated: {now:%Y-%m-%d %H:%M}".format(**locals()))
 
@@ -645,6 +651,19 @@ def _create_html_report_cross_reference_section(element):
         filename, report_name = report_metadata[report_codename]
         cell = link_row.div(klass="col-md-3")
         cell.a(report_name, href=filename)
+
+
+def _create_banner_section(element, config):
+    banners = [
+        ["Alert", "danger", config.get_safe("reporting/alert_banner", default_value="")],
+        ["Warning", "warning", config.get_safe("reporting/warning_banner", default_value="")],
+        ["Info", "info", config.get_safe("reporting/info_banner", default_value="")]
+    ]
+    for header, cls, text in banners:
+        if text is not None and len(text) > 0:
+            alert = element.div(klass="alert bg-" + cls)
+            alert.h4(header)
+            alert.p(text)
 
 
 def _get_readable_datetime(ms_timestamp):

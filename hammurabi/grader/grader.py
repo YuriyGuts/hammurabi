@@ -176,13 +176,11 @@ def create_verifier(testrun):
 
 
 def produce_report(config, testruns):
-    report_dir = config.report_output_dir
-
-    testrun_csv_log_location = reporting.generate_testrun_log_csv(testruns, report_dir)
-    matrix_csv_report_location = reporting.generate_matrix_report_csv(testruns, report_dir)
-    matrix_html_report_location = reporting.generate_matrix_report_html(testruns, report_dir)
-    heatmap_html_report_location = reporting.generate_heatmap_report_html(testruns, report_dir)
-    full_html_log_location = reporting.generate_full_log_html(testruns, report_dir)
+    testrun_csv_log_location = reporting.generate_testrun_log_csv(testruns, config)
+    matrix_csv_report_location = reporting.generate_matrix_report_csv(testruns, config)
+    matrix_html_report_location = reporting.generate_matrix_report_html(testruns, config)
+    heatmap_html_report_location = reporting.generate_heatmap_report_html(testruns, config)
+    full_html_log_location = reporting.generate_full_log_html(testruns, config)
 
     print
     print "Reports:"
