@@ -115,12 +115,15 @@ class TestRunCorrectAnswerResult(TestRunResult):
 
 
 class TestRunWrongAnswerResult(TestRunResult):
-    def __init__(self, expected=None, actual=None):
+    def __init__(self, expected=None, actual=None, custom_message=None):
         super(TestRunWrongAnswerResult, self).__init__("W", "Wrong Answer")
         self.expected = expected
         self.actual = actual
+        self.custom_message = custom_message
 
     def format_details(self):
+        if self.custom_message is not None:
+            return self.custom_message
         return "Expected: {self.expected}, Actual: {self.actual}".format(**locals())
 
 
