@@ -14,9 +14,11 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
     def run(self, testrun, cmd):
         config = testrun.solution.problem.config
         time_limit = config.get_safe("limits/time/{testrun.solution.language}".format(**locals()), default_value=20)
+        multiplier = config.get_safe("limits/time_limit_multiplier", default_value=1.0)
+        adjusted_time_limit = time_limit * multiplier
 
         try:
-            self.run_command_with_timeout(testrun, cmd, time_limit)
+            self.run_command_with_timeout(testrun, cmd, adjusted_time_limit)
         except SubprocessTimeoutError as e:
             result = TestRunTimeoutResult()
             raise TestRunPrematureTerminationError(result)
