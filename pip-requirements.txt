@@ -2,3 +2,6 @@ Django==1.8.3
 argparse==1.2.1
 html==1.16
 psutil==1.2.1
+pytest==2.8.5
+pytest-pythonpath==0.7
+requests==2.2.1
