@@ -14,7 +14,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
     def compile(self, testrun):
         csharp_sources = ' '.join(self._get_csharp_files())
         executable_filename = self._get_executable_filename(testrun)
-        compile_cmd = "mcs -optimize+ {csharp_sources} -out:{executable_filename}".format(**locals())
+        compile_cmd = "mcs -r:Mono.Security -optimize+ {csharp_sources} -out:{executable_filename}".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:
             exit_code = subprocess.call(
