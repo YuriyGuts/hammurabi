@@ -1,7 +1,7 @@
 {
     "locations": {
-        "problem_root": "problems",
-        "report_root": "reports",
+        "problem_root": "grader/problems",
+        "report_root": "grader/reports",
         "report_folder_template": "testrun-{dt:%Y%m%d-%H%M%S-%f}-{hostname}"
     },
 
