@@ -177,6 +177,7 @@ def create_verifier(testrun):
 
 
 def produce_report(config, testruns):
+    pickle_location = reporting.pickle_testruns(testruns, config)
     testrun_csv_log_location = reporting.generate_testrun_log_csv(testruns, config)
     matrix_csv_report_location = reporting.generate_matrix_report_csv(testruns, config)
     matrix_html_report_location = reporting.generate_matrix_report_html(testruns, config)

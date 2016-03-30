@@ -1,8 +1,10 @@
+# TODO: This code is a real mess. Refactor it to templates (Jinja?).
 import colorsys
 import csv
 import datetime
 import html
 import os
+import pickle
 import hammurabi.utils.fileio as fileio
 
 from hammurabi.grader.model import *
@@ -15,6 +17,13 @@ report_metadata = {
     "heatmap-html": ["report-heatmap.html", "Heatmap Report [HTML]"],
     "full-html": ["report-full.html", "Execution Log [HTML]"],
 }
+
+
+def pickle_testruns(testruns, config):
+    pickle_location = os.path.join(config.report_output_dir, "testruns.pickle")
+    with open(pickle_location, "wb") as dmp:
+        pickle.dump(testruns, dmp)
+        return pickle_location
 
 
 def generate_testrun_log_csv(testruns, config):
