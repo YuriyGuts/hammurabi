@@ -181,8 +181,12 @@ class TestRunUnverifiedResult(TestRunResult):
 
 
 class TestRunTimeoutResult(TestRunResult):
-    def __init__(self):
+    def __init__(self, timeout):
         super(TestRunTimeoutResult, self).__init__("T", "Timeout")
+        self.timeout = timeout
+
+    def format_details(self):
+        return "Execution time exceeded {self.timeout} seconds".format(**locals())
 
 
 class GraderJobScope(object):

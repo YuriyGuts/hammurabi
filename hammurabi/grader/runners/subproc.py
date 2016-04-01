@@ -20,7 +20,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
         try:
             self.run_command_with_timeout(testrun, cmd, adjusted_time_limit)
         except SubprocessTimeoutError as e:
-            result = TestRunTimeoutResult()
+            result = TestRunTimeoutResult(adjusted_time_limit)
             raise TestRunPrematureTerminationError(result)
 
     def run_command_with_timeout(self, testrun, cmd, timeout_sec):

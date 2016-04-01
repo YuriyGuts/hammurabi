@@ -141,7 +141,7 @@ def generate_matrix_report_html(testruns, config):
     results = [
         TestRunCorrectAnswerResult(),
         TestRunWrongAnswerResult(),
-        TestRunTimeoutResult(),
+        TestRunTimeoutResult(timeout=0),
         TestRunRuntimeErrorResult(message=None),
         TestRunFormatErrorResult(message=None),
         TestRunCompilationErrorResult(message=None),
