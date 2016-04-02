@@ -1,0 +1,104 @@
+{% extends "report.html" %}
+
+{% macro link_title_for_testrun(testrun) -%}
+    {% if testrun|is_correct_answer -%}
+        {{ testrun.result.status }}
+    {%- else -%}
+        {{ testrun.result.status -}}
+        {%- if testrun.result.format_details() is not equalto None -%}
+            {{ "\n\n" }}{{ testrun.result.format_details()|dump }}
+        {%- endif -%}
+    {%- endif %}
+{%- endmacro %}
+
+{% block content %}
+    {{ debug }}
+
+    <h3>Legend</h3>
+    <table class="table table-bordered" style="width: auto;">
+        {% for legend_result in legend_results %}
+            <tr>
+                <td class="bg-{{ legend_result|contextual_style }} text-center" style="width: 50px">{{ legend_result.status_code }}</td>
+                <td class="bg-{{ legend_result|contextual_style }}">{{ legend_result.status }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    {% for problem_group in testruns|groupby("solution.problem.name")|sort %}
+        <div class="page-header">
+            <h2>Problem: {{ problem_group.grouper }}</h2>
+        </div>
+
+        <table class="table table-bordered text-center" style="width: auto;">
+            <thead>
+                <tr>
+                    <th class="text-center bg-primary author-header-cell nowrap" style="width: 100px;">problem</th>
+                    <th class="text-center bg-primary author-header-cell nowrap" style="width: 100px;">testcase</th>
+
+                    {% for author_group in testruns|groupby("solution.author") %}
+                        <th class="text-center bg-primary author-header-cell nowrap" style="width: 100px;">{{ author_group.grouper }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for testcase_group in problem_group.list|groupby("testcase.name") %}
+                    <tr>
+                        <td>{{ problem_group.grouper }}</td>
+                        <td>{{ testcase_group.grouper }}</td>
+                        {% for testrun in testcase_group.list|sort(attribute="solution.author") %}
+                            <td class="bg-{{ testrun.result|contextual_style }} result-link-cell">
+                                <a href="report-full.html#{{ problem_group.grouper }}-{{ testrun.solution.author }}-{{ testrun.testcase.name }}" title="{{ link_title_for_testrun(testrun) }}">{{ testrun.result.status_code }}</a>
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td class="bg-primary"></td>
+                    <td class="bg-primary"></td>
+                    {% for author_group in problem_group.list|groupby("solution.author") %}
+                        <td class="bg-primary nowrap">
+                            <strong>
+                                {{- author_group.list|sum(attribute="result.score") }} / {{ author_group.list|sum(attribute="testcase.score") }}
+                                <br>
+                                ({{ (author_group.list|sum(attribute="result.score") * 100.0 / author_group.list|sum(attribute="testcase.score"))|round|int }}%)
+                            </strong>
+                        </td>
+                    {% endfor %}
+                </tr>
+
+            </tbody>
+        </table>
+    {% endfor %}
+
+    <div class="page-header">
+        <h1>Grand Total</h1>
+    </div>
+
+    <table class="table table-bordered text-center" style="width: auto;">
+        <thead>
+            <tr>
+                <th class="text-center bg-primary author-header-cell" style="width: 150px;">problem</th>
+                <th class="text-center bg-primary author-header-cell" style="width: 100px;">testcase</th>
+
+                {% for author_group in testruns|groupby("solution.author") %}
+                    <th class="text-center bg-primary author-header-cell" style="width: 125px;">{{ author_group.grouper }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="bg-info"></td>
+                <td class="bg-info"></td>
+                {% for author_group in testruns|groupby("solution.author") %}
+                    <td class="bg-info">
+                        <strong>
+                            {{- author_group.list|sum(attribute="result.score") }} / {{ author_group.list|sum(attribute="testcase.score") }}
+                            <br>
+                            ({{ (author_group.list|sum(attribute="result.score") * 100.0 / author_group.list|sum(attribute="testcase.score"))|round|int }}%)
+                        </strong>
+                    </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+{% endblock %}

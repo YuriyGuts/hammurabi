@@ -1,6 +1,8 @@
 import datetime
+import glob
 import os
 import socket
+import shutil
 import sys
 import traceback
 import hammurabi.utils.confreader as confreader
@@ -39,7 +41,8 @@ def grade(args):
     except KeyboardInterrupt:
         pass
 
-    produce_report(config, testruns)
+    testruns = fill_testruns_for_missing_solutions(testruns)
+    generate_reports(config, testruns)
 
 
 def read_config():
@@ -176,18 +179,57 @@ def create_verifier(testrun):
     return verifier()
 
 
-def produce_report(config, testruns):
-    pickle_location = reporting.pickle_testruns(testruns, config)
-    testrun_csv_log_location = reporting.generate_testrun_log_csv(testruns, config)
-    matrix_csv_report_location = reporting.generate_matrix_report_csv(testruns, config)
-    matrix_html_report_location = reporting.generate_matrix_report_html(testruns, config)
-    heatmap_html_report_location = reporting.generate_heatmap_report_html(testruns, config)
-    full_html_log_location = reporting.generate_full_log_html(testruns, config)
+def fill_testruns_for_missing_solutions(testruns):
+    padded_testruns = testruns
+    unique_authors = sorted(list({testrun.solution.author for testrun in testruns}))
+    unique_problems = sorted(list({testrun.solution.problem.name for testrun in testruns}))
+
+    for problem in unique_problems:
+        for author in unique_authors:
+
+            # If this author hasn't attempted this problem, create fake testruns with 'Solution Missing' result.
+            if not any(testrun.solution.author == author and testrun.solution.problem.name == problem for testrun in testruns):
+                problem_obj = next((testrun.solution.problem for testrun in testruns if testrun.solution.problem.name == problem))
+                solution = Solution(problem_obj, author, None)
+
+                for testcase in problem_obj.testcases:
+                    fake_testrun = TestRun(solution, testcase, None, None, None, None, None, result=TestRunSolutionMissingResult())
+                    fake_testrun.record_judge_start_time()
+                    fake_testrun.record_lean_start_time()
+                    fake_testrun.record_lean_end_time()
+                    fake_testrun.record_judge_end_time()
+                    padded_testruns.append(fake_testrun)
+
+    return padded_testruns
+
+
+def generate_reports(config, testruns):
+    def get_report_path(relative_name):
+        return os.path.abspath(os.path.join(config.report_output_dir, relative_name))
+
+    # Prepare paths.
+    pickle_location = get_report_path("testruns.pickle")
+    testrun_csv_log_location = get_report_path("testruns.csv")
+    full_html_log_location = get_report_path("report-full.html")
+    matrix_html_report_location = get_report_path("report-matrix.html")
+    heatmap_html_report_location = get_report_path("report-heatmap.html")
+
+    # Generate report files.
+    reporting.pickle_testruns(testruns, pickle_location)
+    reporting.generate_testrun_log_csv(testruns, testrun_csv_log_location)
+    reporting.generate_full_log_html(testruns, full_html_log_location)
+    reporting.generate_matrix_report_html(testruns, matrix_html_report_location)
+    reporting.generate_heatmap_report_html(testruns, heatmap_html_report_location)
+
+    # Copy the stylesheets used by the reports.
+    for css in glob.glob(os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "styles", "*.css"))):
+        shutil.copy(css, config.report_output_dir)
 
     print
     print "Reports:"
+    print "--------"
+    print "Pickled test runs:", pickle_location
     print "CSV log:", testrun_csv_log_location
-    print "Matrix CSV report:", matrix_csv_report_location
+    print "Detailed HTML log:", full_html_log_location
     print "Matrix HTML report:", matrix_html_report_location
     print "Heatmap HTML report:", heatmap_html_report_location
-    print "Detailed HTML log:", full_html_log_location

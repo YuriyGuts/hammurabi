@@ -1,0 +1,42 @@
+.cross-reference-row {
+    margin-top: 20px;
+}
+
+.author-header-cell {
+    vertical-align: middle !important;
+}
+
+.result-link-cell {
+    padding: 0;
+    vertical-align: middle
+}
+
+.result-link-cell a {
+    display: block;
+}
+
+.heatmap-cell a:link, .heatmap-cell a:visited {
+    color: black;
+}
+
+a:visited, a:link {
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.bg-success a:visited, .bg-success a:link {
+    text-decoration: none;
+    color: #000
+}
+
+.bg-success a:hover {
+    text-decoration: underline;
+    color: #008cba
+}
+
+.nowrap {
+    white-space: nowrap;
+}

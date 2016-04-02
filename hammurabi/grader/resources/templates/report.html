@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_name }}</title>
+
+    <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="report.css">
+</head>
+
+<body>
+<div class="container">
+    <div class="row cross-reference-row">
+        <div class="col-md-3">
+            <a href="report-matrix.html">Matrix Report [HTML]</a>
+        </div>
+        <div class="col-md-3">
+            <a href="report-heatmap.html">Heatmap Report [HTML]</a>
+        </div>
+        <div class="col-md-3">
+            <a href="report-full.html">Execution Log [HTML]</a>
+        </div>
+        <div class="col-md-3">
+            <a href="testruns.csv">Execution Log [CSV]</a>
+        </div>
+    </div>
+
+    <div class="page-header">
+        <h1>{{ report_name }}</h1>
+    </div>
+    <p>Last updated: {{ report_date|format_timestamp(format='%Y-%m-%d %H:%M') }}</p>
+
+    {% block content %}
+    {% endblock %}
+
+    <div class="container" style="float: none; margin-bottom: 25px">
+        <small>
+            <a href="https://github.com/YuriyGuts/hammurabi">Hammurabi</a> online judge: strict, but fair. Copyright &copy; 2015&ndash;2016 Yuriy Guts.
+        </small>
+    </div>
+</div>
+</body>
+
+</html>

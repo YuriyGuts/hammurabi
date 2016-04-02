@@ -68,6 +68,7 @@ class TestRun(object):
         self.lean_end_time = None
         self.memory_limit = memory_limit
         self.time_limit = time_limit
+        self.data = {}
 
     def __str__(self):
         return "Solution: {self.solution.problem.name} / {self.solution.author}, Result: {self.result}".format(**locals())
@@ -186,7 +187,7 @@ class TestRunTimeoutResult(TestRunResult):
         self.timeout = timeout
 
     def format_details(self):
-        return "Execution time exceeded {self.timeout} seconds".format(**locals())
+        return "Execution time exceeded the limit of {self.timeout:.2g} seconds".format(**locals())
 
 
 class GraderJobScope(object):

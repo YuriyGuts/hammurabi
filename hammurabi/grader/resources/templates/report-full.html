@@ -1,0 +1,73 @@
+{% extends "report.html" %}
+
+{% macro pre_if_not_empty(text) -%}
+    {% if text is none or text == "" %}
+        <em>none</em>.
+    {% else %}
+        <pre>{{ text|dump }}</pre>
+    {% endif %}
+{%- endmacro %}
+
+{% block content %}
+    {{ debug }}
+
+    {% for problem_group in testruns|groupby("solution.problem.name")|sort %}
+        <div class="page-header">
+            <h2>Problem: {{ problem_group.grouper }}</h2>
+        </div>
+
+        {% for solution_group in testruns|selectattr("solution.problem.name", "equalto", problem_group.grouper)|groupby("solution.author") %}
+            <h3>
+                Solution: {{ solution_group.grouper }}
+                <small> (Problem: {{ problem_group.grouper }}, Language: {{ solution_group.list[0].solution.language }})</small>
+            </h3>
+
+            {% for testrun in solution_group.list %}
+                <a name="{{ problem_group.grouper }}-{{ solution_group.grouper }}-{{ testrun.testcase.name }}"></a>
+                <div class="panel panel-{{ testrun.result|contextual_style }}">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Testcase: {{ testrun.testcase.name }}</h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table table-bordered" style="width: auto;">
+                            <tr>
+                                <td>Judging Date</td>
+                                <td>
+                                    <samp>
+                                        {{- testrun.judge_start_time|format_timestamp_micro }} &ndash; {{ testrun.judge_end_time|format_timestamp_micro }}
+                                    </samp>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Solution Time</td>
+                                <td><samp>{{ testrun.get_lean_elapsed_milliseconds() }} ms</samp></td>
+                            </tr>
+                            <tr>
+                                <td>Overall Time</td>
+                                <td>
+                                    <samp>
+                                        {{- testrun.get_judge_elapsed_milliseconds() }}
+                                        ms (judge overhead: {{ testrun.get_judge_elapsed_milliseconds() - testrun.get_lean_elapsed_milliseconds() }} ms)
+                                    </samp>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Result</td>
+                                <td><samp>[{{ testrun.result.status_code }}] {{ testrun.result.status }}</samp></td>
+                            </tr>
+                            <tr>
+                                <td>Score</td>
+                                <td><samp>{{ testrun.result.score }}</samp></td>
+                            </tr>
+                        </table>
+
+                        <p>Result details: {{ pre_if_not_empty(testrun.result.format_details()) }}</p>
+                        <p>Compiler output: {{ pre_if_not_empty(testrun.compiler_output_filename|dump_file) }}</p>
+                        <p>Standard output stream: {{ pre_if_not_empty(testrun.stdout_filename|dump_file) }}</p>
+                        <p>Standard error stream: {{ pre_if_not_empty(testrun.stderr_filename|dump_file) }}</p>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    {% endfor %}
+{% endblock %}
