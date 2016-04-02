@@ -32,7 +32,10 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
             timer.expired = True
             process = psutil.Process(proc.pid)
             for child_process in process.children(recursive=True):
-                child_process.kill()
+                try:
+                    child_process.kill()
+                except psutil.NoSuchProcess:
+                    pass
             process.kill()
 
         with open(testrun.stdout_filename, "w") as stdout:
