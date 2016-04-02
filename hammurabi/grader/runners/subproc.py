@@ -31,7 +31,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
         def kill_process():
             timer.expired = True
             process = psutil.Process(proc.pid)
-            for child_process in process.get_children(recursive=True):
+            for child_process in process.children(recursive=True):
                 child_process.kill()
             process.kill()
 
