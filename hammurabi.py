@@ -35,6 +35,12 @@ def parse_command_line_args():
     grade_command_description = "Check one or more solutions."
     grade_command_parser = subparsers.add_parser(grade_command, help=grade_command_description)
     grade_command_parser.add_argument(
+        "--conf",
+        dest="conf",
+        help="Use an alternative config file.",
+        required=False
+    )
+    grade_command_parser.add_argument(
         "--problem",
         dest="problem",
         nargs="+",

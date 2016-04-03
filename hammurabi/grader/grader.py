@@ -16,7 +16,7 @@ from hammurabi.utils.exceptions import *
 
 
 def grade(args):
-    config = read_config()
+    config = read_config(args)
     apply_locations_to_config(config)
     problems = discovery.discover_problems(config)
     scope = get_scope(problems, args, config)
@@ -45,9 +45,13 @@ def grade(args):
     generate_reports(config, testruns)
 
 
-def read_config():
-    config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../conf"))
-    config_file = os.path.join(config_dir, "grader.conf")
+def read_config(args):
+    if args.conf is not None:
+        config_file = os.path.abspath(args.conf)
+    else:
+        config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../conf"))
+        config_file = os.path.join(config_dir, "grader.conf")
+
     if not os.path.exists(config_file):
         raise EnvironmentError("Configuration file '{config_file}' not found. Please create one or copy it from grader.conf.template.".format(**locals()))
     return confreader.read_config(config_file)
