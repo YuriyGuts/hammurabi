@@ -57,6 +57,10 @@ class BaseSolutionAdapter(object):
         solution_input_filename = os.path.join(self.solution.root_dir, self.solution.problem.input_filename)
         shutil.copyfile(testcase.input_filename, solution_input_filename)
 
+    def cleanup_testcase(self, testcase):
+        solution_input_filename = os.path.join(self.solution.root_dir, self.solution.problem.input_filename)
+        os.remove(solution_input_filename)
+
     def get_run_command_line(self, testrun):
         return [self.solution.language, self.get_entry_point_file()]
 
@@ -91,11 +95,13 @@ class BaseSolutionAdapter(object):
         if not self.is_compiled:
             self.compile(testrun)
 
-        self.supply_testcase(testrun.testcase)
-        cmd = self.get_run_command_line_string(testrun)
-
-        runner = self.create_runner(testrun, cmd)
-        runner.run(testrun, cmd)
+        try:
+            self.supply_testcase(testrun.testcase)
+            cmd = self.get_run_command_line_string(testrun)
+            runner = self.create_runner(testrun, cmd)
+            runner.run(testrun, cmd)
+        finally:
+            self.cleanup_testcase(testrun.testcase)
 
         self.collect_output(testrun)
 
