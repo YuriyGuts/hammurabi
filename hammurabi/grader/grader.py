@@ -3,7 +3,6 @@ import glob
 import os
 import socket
 import shutil
-import sys
 import traceback
 import hammurabi.utils.confreader as confreader
 import hammurabi.grader.discovery as discovery
@@ -125,37 +124,18 @@ def judge_solution(solution, testcases):
         adapter = create_adapter(solution)
         adapter.prepare()
     except:
-        print "An internal error has occurred while judging the solution."
+        print "Cannot create solution adapter."
         traceback.print_exc()
+        return []
 
     testruns = []
     for testcase in testcases:
+        testrun = None
         try:
             print "Running test case: {testcase.name} (score: {testcase.score})".format(**locals()),
-            try:
-                testrun = adapter.create_testrun(testcase)
-                testrun.record_judge_start_time()
-                adapter.run(testrun)
-
-                if solution != solution.problem.reference_solution:
-                    verifier = create_verifier(testrun)
-                    is_correct = verifier.verify(testrun)
-                else:
-                    testrun.result = TestRunUnverifiedResult("Verification ignored - running the reference solution.")
-
-            except TestRunPrematureTerminationError as e:
-                testrun.result = e.result
-
-            if isinstance(testrun.result, TestRunCorrectAnswerResult):
-                testrun.result.score = testrun.testcase.score
-            else:
-                testrun.result.score = 0
-
+            testrun = judge_testcase(solution, testcase, adapter)
         except KeyboardInterrupt:
             raise
-
-        except:
-            testrun.result = TestRunInternalErrorResult(exception_info=traceback.format_exc())
 
         testrun.record_judge_end_time()
         lean_time_elapsed = testrun.get_lean_elapsed_milliseconds()
@@ -171,6 +151,35 @@ def judge_solution(solution, testcases):
     return testruns
 
 
+def judge_testcase(solution, testcase, adapter):
+    testrun = adapter.create_testrun(testcase)
+    try:
+        testrun.record_judge_start_time()
+        adapter.run(testrun)
+
+        if solution != solution.problem.reference_solution:
+            verifier = create_verifier(testrun)
+            is_correct = verifier.verify(testrun)
+        else:
+            testrun.result = TestRunUnverifiedResult("Verification ignored - running the reference solution.")
+
+    except TestRunPrematureTerminationError as e:
+        testrun.result = e.result
+
+    except KeyboardInterrupt:
+        raise
+
+    except:
+        testrun.result = TestRunInternalErrorResult(exception_info=traceback.format_exc())
+
+    if isinstance(testrun.result, TestRunCorrectAnswerResult):
+        testrun.result.score = testrun.testcase.score
+    else:
+        testrun.result.score = 0
+
+    return testrun
+
+
 def create_adapter(solution):
     if solution.language == "java":
         return JavaSolutionAdapter(solution)
@@ -184,9 +193,12 @@ def create_adapter(solution):
 
 
 def create_verifier(testrun):
-    verifier_class = testrun.solution.problem.config.get_safe("verifier", default_value="AnswerVerifier")
-    verifier = globals()[verifier_class]
-    return verifier()
+    try:
+        verifier_class = testrun.solution.problem.config.get_safe("verifier", default_value="AnswerVerifier")
+        verifier = globals()[verifier_class]
+        return verifier()
+    except:
+        raise EnvironmentError("Cannot create verifier '{verifier_class}'".format(**locals()))
 
 
 def fill_testruns_for_missing_solutions(testruns):
