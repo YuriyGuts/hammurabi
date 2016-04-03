@@ -189,6 +189,10 @@ def create_adapter(solution):
         return CSharpSolutionAdapter(solution)
     elif solution.language == "cpp":
         return CppSolutionAdapter(solution)
+    elif solution.language == "ruby":
+        return RubySolutionAdapter(solution)
+    elif solution.language == "python":
+        return PythonSolutionAdapter(solution)
     return BaseSolutionAdapter(solution)
 
 

@@ -1,6 +1,7 @@
 import errno
 import os
 import shutil
+import subprocess
 import hammurabi.utils.fileio as fileio
 
 from hammurabi.grader.model import *
@@ -14,6 +15,10 @@ class BaseSolutionAdapter(object):
         self.config = solution.problem.config
         self.is_compiled = False
         self.output_dir = os.path.join(self.config.report_output_dir, self.solution.problem.name, self.solution.author)
+
+    @staticmethod
+    def describe():
+        pass
 
     def prepare(self):
         self.clean_output()

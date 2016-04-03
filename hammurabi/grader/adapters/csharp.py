@@ -11,6 +11,11 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
     def __init__(self, solution):
         super(CSharpSolutionAdapter, self).__init__(solution)
 
+    @staticmethod
+    def describe():
+        subprocess.call("mono --version", shell=True)
+        subprocess.call("mcs --version", shell=True)
+
     def compile(self, testrun):
         csharp_sources = ' '.join(self._get_csharp_files())
         executable_filename = self._get_executable_filename(testrun)

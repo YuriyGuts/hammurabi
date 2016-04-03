@@ -20,6 +20,9 @@ def main():
     if args.command == "server":
         return run_server(args)
 
+    if args.command == "languages":
+        return describe_languages(args)
+
 
 def bootstrap():
     # In scope of this process, add self to PYTHONPATH for the imports to work properly.
@@ -70,6 +73,10 @@ def parse_command_line_args():
         required=False
     )
 
+    languages_command = "languages"
+    languages_command_description = "Describe the configured language compilers/interpreters."
+    languages_command_parser = subparsers.add_parser(languages_command, help=languages_command_description)
+
     server_command = "server"
     server_command_description = "Serve a Web application for submitting solutions."
     server_command_parser = subparsers.add_parser(server_command, help=server_command_description)
@@ -89,14 +96,20 @@ def parse_command_line_args():
     )
 
     grade_command_parser.prog = grade_command_parser.prog.replace(" [COMMAND] [OPTIONS]", "").replace("usage: ", "")
+    languages_command_parser.prog = languages_command_parser.prog.replace(" [COMMAND] [OPTIONS]", "").replace("usage: ", "")
     server_command_parser.prog = server_command_parser.prog.replace(" [COMMAND] [OPTIONS]", "").replace("usage: ", "")
 
     try:
         command_line_args = top_level_parser.parse_args()
         return command_line_args
     except:
-        for command, description, parser in [(grade_command, grade_command_description, grade_command_parser),
-                                             (server_command, server_command_description, server_command_parser)]:
+        subparser_descriptions = [
+            (grade_command, grade_command_description, grade_command_parser),
+            (languages_command, languages_command_description, languages_command_parser),
+            (server_command, server_command_description, server_command_parser)
+        ]
+
+        for command, description, parser in subparser_descriptions:
             print ""
             print "-" * 30, "COMMAND:", command, "-" * 30
             print description
@@ -114,6 +127,24 @@ def print_banner():
 def run_grader(args):
     import hammurabi.grader.grader as grader
     return grader.grade(args)
+
+
+def describe_languages(args):
+    import inspect
+    import hammurabi.grader.adapters as adapters
+
+    solution_adapter_classes = [
+        cls
+        for name, cls in inspect.getmembers(adapters)
+        if isinstance(cls, type) and issubclass(cls, adapters.BaseSolutionAdapter) and cls != adapters.BaseSolutionAdapter
+    ]
+
+    for cls in solution_adapter_classes:
+        print
+        print "---", cls.__name__, "---"
+        cls.describe()
+
+    return 0
 
 
 def run_server(args):

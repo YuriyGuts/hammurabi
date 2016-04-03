@@ -11,6 +11,11 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
     def __init__(self, solution):
         super(JavaSolutionAdapter, self).__init__(solution)
 
+    @staticmethod
+    def describe():
+        subprocess.call("java -version", shell=True)
+        subprocess.call("javac -version", shell=True)
+
     def compile(self, testrun):
         java_sources = ' '.join(self._get_java_files())
         compile_cmd = "javac -O -d . {java_sources}".format(**locals())

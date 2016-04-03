@@ -11,6 +11,10 @@ class CppSolutionAdapter(BaseSolutionAdapter):
     def __init__(self, solution):
         super(CppSolutionAdapter, self).__init__(solution)
 
+    @staticmethod
+    def describe():
+        subprocess.call("g++ --version", shell=True)
+
     def compile(self, testrun):
         cpp_sources = ' '.join(self._get_cpp_files())
         executable_filename = self._get_executable_filename(testrun)
