@@ -147,15 +147,14 @@ class TestRunFormatErrorResult(TestRunResult):
 
 
 class TestRunInternalErrorResult(TestRunResult):
-    def __init__(self, exception):
+    def __init__(self, exception_info):
         super(TestRunInternalErrorResult, self).__init__("X", "Judge Internal Error")
-        self.exception = exception
+        self.exception_info = exception_info
 
     def format_details(self):
-        if self.exception is None or len(self.exception) != 3:
+        if self.exception_info is None or len(self.exception_info) == 0:
             return super(TestRunInternalErrorResult, self).format_details()
-        exc_type, exc, tb = self.exception
-        return '\n'.join([str(exc_type), exc.message] + traceback.format_tb(tb))
+        return self.exception_info
 
 
 class TestRunCompilationErrorResult(TestRunResult):

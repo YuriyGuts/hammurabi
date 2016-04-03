@@ -65,7 +65,7 @@ def generate_matrix_report_html(testruns, filename):
         TestRunFormatErrorResult(message=None),
         TestRunCompilationErrorResult(message=None),
         TestRunSolutionMissingResult(),
-        TestRunInternalErrorResult(exception=None),
+        TestRunInternalErrorResult(exception_info=None),
     ]
     content = env.get_template("report-matrix.html").render(**locals())
     fileio.write_entire_file(filename, content)

@@ -155,8 +155,7 @@ def judge_solution(solution, testcases):
             raise
 
         except:
-            e = sys.exc_info()
-            testrun.result = TestRunInternalErrorResult(e)
+            testrun.result = TestRunInternalErrorResult(exception_info=traceback.format_exc())
 
         testrun.record_judge_end_time()
         lean_time_elapsed = testrun.get_lean_elapsed_milliseconds()
@@ -164,6 +163,9 @@ def judge_solution(solution, testcases):
         judge_overhead = judge_time_elapsed - lean_time_elapsed
 
         print "-> {testrun.result}, Time: {lean_time_elapsed} ms, Overall time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals())
+        if isinstance(testrun.result, TestRunInternalErrorResult):
+            print testrun.result.format_details()
+
         testruns.append(testrun)
 
     return testruns
