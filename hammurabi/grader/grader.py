@@ -48,6 +48,8 @@ def grade(args):
 def read_config():
     config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../conf"))
     config_file = os.path.join(config_dir, "grader.conf")
+    if not os.path.exists(config_file):
+        raise EnvironmentError("Configuration file '{config_file}' not found. Please create one or copy it from grader.conf.template.".format(**locals()))
     return confreader.read_config(config_file)
 
 
@@ -108,6 +110,8 @@ def get_report_output_dir(config):
     hostname = socket.getfqdn()
     report_output_dir_name = str(config.get_safe("locations/report_folder_template")).format(**locals())
     report_output_dir = os.path.join(config.report_root_dir, report_output_dir_name)
+    if os.path.exists(report_output_dir):
+        shutil.rmtree(report_output_dir, ignore_errors=True)
     os.makedirs(report_output_dir)
     return report_output_dir
 
