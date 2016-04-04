@@ -52,13 +52,10 @@ def test_read_config_given_invalid_json_throws(filename_for_invalid_config):
         config = confreader.read_config(filename_for_invalid_config)
 
 
-def test_read_config_given_nonexistent_file_returns_blank_object(non_existent_filename):
-    # Act
-    config = confreader.read_config(non_existent_filename)
-
+def test_read_config_given_nonexistent_file_throws(non_existent_filename):
     # Assert
-    assert isinstance(config, ObjectDictView)
-    assert len(vars(config)) == 0
+    with pytest.raises(Exception):
+        config = confreader.read_config(non_existent_filename)
 
 
 def test_read_config_given_valid_json_returns_nested_objects(filename_for_sample_valid_config):
