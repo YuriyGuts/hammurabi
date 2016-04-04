@@ -3,7 +3,6 @@
 # -----------------
 hammurabi/conf/*.conf
 hammurabi/grader/problems/*
-!hammurabi/grader/problems/hworld
 !hammurabi/grader/problems/README.md
 
 hammurabi/grader/reports/testrun*

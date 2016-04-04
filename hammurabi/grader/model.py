@@ -106,6 +106,9 @@ class TestRunResult(object):
     def __str__(self):
         return "[{self.status_code}] {self.status}, Score: {self.score}".format(**locals())
 
+    def is_correct(self):
+        return False
+
     def format_details(self):
         return None
 
@@ -113,6 +116,9 @@ class TestRunResult(object):
 class TestRunCorrectAnswerResult(TestRunResult):
     def __init__(self):
         super(TestRunCorrectAnswerResult, self).__init__("C", "Correct Answer")
+
+    def is_correct(self):
+        return True
 
 
 class TestRunWrongAnswerResult(TestRunResult):

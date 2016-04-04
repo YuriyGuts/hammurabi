@@ -48,7 +48,7 @@ def read_config(args):
     if args.conf is not None:
         config_file = os.path.abspath(args.conf)
     else:
-        config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../conf"))
+        config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "conf"))
         config_file = os.path.join(config_dir, "grader.conf")
 
     if not os.path.exists(config_file):
@@ -172,7 +172,7 @@ def judge_testcase(solution, testcase, adapter):
     except:
         testrun.result = TestRunInternalErrorResult(exception_info=traceback.format_exc())
 
-    if isinstance(testrun.result, TestRunCorrectAnswerResult):
+    if testrun.result.is_correct():
         testrun.result.score = testrun.testcase.score
     else:
         testrun.result.score = 0

@@ -167,7 +167,7 @@ def get_contextual_style_by_result(testrun_result):
 
 
 def is_correct_answer(testrun):
-    return isinstance(testrun.result, TestRunCorrectAnswerResult)
+    return testrun.result.is_correct()
 
 
 def adjust_time_for_language(time, language):

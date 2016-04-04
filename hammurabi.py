@@ -11,7 +11,7 @@ ERROR_INVALID_ARGS = 1
 
 def main():
     bootstrap()
-    args = parse_command_line_args()
+    args = parse_command_line_args(sys.argv)
     print_banner()
 
     if args.command == "grade":
@@ -26,12 +26,12 @@ def main():
 
 def bootstrap():
     # In scope of this process, add self to PYTHONPATH for the imports to work properly.
-    current_dir = os.getcwd()
+    current_dir = os.path.abspath(os.path.dirname(__file__))
     sys.path.append(current_dir)
 
 
-def parse_command_line_args():
-    top_level_parser = argparse.ArgumentParser(usage="{self} [COMMAND] [OPTIONS]".format(self=os.path.basename(sys.argv[0])))
+def parse_command_line_args(args):
+    top_level_parser = argparse.ArgumentParser(usage="{self} [COMMAND] [OPTIONS]".format(self=os.path.basename(args[0])))
     subparsers = top_level_parser.add_subparsers(title="Available commands", metavar="COMMAND", dest="command")
 
     grade_command = "grade"
