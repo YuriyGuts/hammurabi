@@ -23,6 +23,7 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
     def verify(self, testrun):
         with open(testrun.answer_filename, "r") as given_answer_file:
             with open(testrun.testcase.correct_answer_filename, "r") as correct_answer_file:
+                # Matching the files line-by-line.
                 for correct_line in correct_answer_file.readlines():
                     try:
                         given_line = given_answer_file.readline()
@@ -31,17 +32,29 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
                         testrun.result = TestRunFormatErrorResult(message=exc.message)
                         return False
 
+                    # Matching the space-separated tokens in both lines.
                     if len(correct_line.strip()) > 0:
                         correct_items = [self.map_input_item(item) for item in correct_line.split()]
                         try:
                             given_items = [self.map_input_item(item) for item in given_line.split()]
                             if correct_items != given_items:
-                                testrun.result = TestRunWrongAnswerResult(expected=correct_items, actual=given_items)
+                                expected = '"{0}"'.format(" ".join(correct_items))
+                                actual = '"{0}"'.format(" ".join(given_items))
+                                testrun.result = TestRunWrongAnswerResult(expected=expected, actual=actual)
                                 return False
                         except:
                             exc_type, exc, tb = sys.exc_info()
                             testrun.result = TestRunFormatErrorResult(message=exc.message)
                             return False
+
+                # If there's non-empty stuff remaining in the given answer file, raise an error.
+                try:
+                    extra_line = given_answer_file.readline()
+                    if len(extra_line.strip()) > 0:
+                        testrun.result = TestRunFormatErrorResult(message="The answer file contained more information than required.")
+                        return False
+                except:
+                    pass
 
         testrun.result = TestRunCorrectAnswerResult()
         return True

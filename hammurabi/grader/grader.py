@@ -48,7 +48,7 @@ def read_config(args):
     if args.conf is not None:
         config_file = os.path.abspath(args.conf)
     else:
-        config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "conf"))
+        config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "conf"))
         config_file = os.path.join(config_dir, "grader.conf")
 
     if not os.path.exists(config_file):
@@ -97,14 +97,14 @@ def apply_locations_to_config(config):
 def get_problem_root_dir(config):
     problem_root_dir = config.get_safe("locations/problem_root", default_value="grader/problems")
     if not os.path.isabs(problem_root_dir):
-        problem_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", problem_root_dir))
+        problem_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, problem_root_dir))
     return problem_root_dir
 
 
 def get_report_root_dir(config):
     report_root_dir = config.get_safe("locations/report_root", default_value="grader/reports")
     if not os.path.isabs(report_root_dir):
-        report_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", report_root_dir))
+        report_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, report_root_dir))
     return report_root_dir
 
 

@@ -6,7 +6,7 @@
     {%- else -%}
         {{ testrun.result.status -}}
         {%- if testrun.result.format_details() is not equalto None -%}
-            {{ "\n\n" }}{{ testrun.result.format_details()|dump }}
+            {{ "\n\n" }}{{ testrun.result.format_details()|dump|e }}
         {%- endif -%}
     {%- endif %}
 {%- endmacro %}

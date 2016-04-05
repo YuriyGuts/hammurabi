@@ -28,15 +28,19 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
 
         Return subprocess exit code on natural completion of the subprocess.
         Raise an exception if timeout expires before subprocess completes."""
+
+        def do_kill_process(process):
+            try:
+                process.kill()
+            except psutil.NoSuchProcess:
+                pass
+
         def kill_process():
             timer.expired = True
             process = psutil.Process(proc.pid)
             for child_process in process.children(recursive=True):
-                try:
-                    child_process.kill()
-                except psutil.NoSuchProcess:
-                    pass
-            process.kill()
+                do_kill_process(child_process)
+            do_kill_process(process)
 
         with open(testrun.stdout_filename, "w") as stdout:
             with open(testrun.stderr_filename, "w") as stderr:
