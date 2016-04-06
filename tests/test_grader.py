@@ -1,5 +1,6 @@
 import os
 import pickle
+import platform
 import pytest
 import shutil
 import subprocess
@@ -13,6 +14,11 @@ def get_hammurabi_environment(tmpdir, template_problem_dir):
     problem_dir_path = target_problem_dir
     report_dir_path = tmpdir.mkdir("reports").strpath
     config_file_path = tmpdir.join("grader.conf").strpath
+
+    if platform.system() == "Windows":
+        problem_dir_path = problem_dir_path.replace("\\", "/")
+        report_dir_path = report_dir_path.replace("\\", "/")
+        config_file_path = config_file_path.replace("\\", "/")
 
     with open(config_file_path, "w") as conf:
         conf.write("""
@@ -44,7 +50,7 @@ def test_all_languages_given_correct_solutions_pass_all_testcases(grader_languag
     hammurabi_entry_point = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, "hammurabi.py"))
 
     # Act
-    grader_cmd = "python {hammurabi_entry_point} grade --conf {config_file_path}".format(**locals())
+    grader_cmd = "python \"{hammurabi_entry_point}\" grade --conf \"{config_file_path}\"".format(**locals())
     exitcode = subprocess.call(grader_cmd, shell=True)
 
     # Assert
@@ -76,7 +82,7 @@ def test_all_languages_given_faulty_solutions_report_proper_errors(grader_verifi
     hammurabi_entry_point = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, "hammurabi.py"))
 
     # Act
-    grader_cmd = "python {hammurabi_entry_point} grade --conf {config_file_path}".format(**locals())
+    grader_cmd = "python \"{hammurabi_entry_point}\" grade --conf \"{config_file_path}\"".format(**locals())
     exitcode = subprocess.call(grader_cmd, shell=True)
 
     # Assert
