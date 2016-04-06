@@ -6,6 +6,7 @@ hammurabi/grader/problems/*
 !hammurabi/grader/problems/README.md
 
 hammurabi/grader/reports/testrun*
+hammurabi/grader/reports/report*
 
 hammurabi/grader/verifiers/*
 !hammurabi/grader/verifiers/__init__.py
