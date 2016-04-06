@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import hammurabi.utils.fileio as fileio
 
@@ -13,13 +14,20 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe():
-        subprocess.call("mono --version", shell=True)
-        subprocess.call("mcs --version", shell=True)
+        if platform.system() == "Windows":
+            subprocess.call("vsvars32.bat & csc", shell=True)
+        else:
+            subprocess.call("mono --version", shell=True)
+            subprocess.call("mcs --version", shell=True)
 
     def compile(self, testrun):
-        csharp_sources = ' '.join(self._get_csharp_files())
+        csharp_sources = ' '.join(['"{0}"'.format(file) for file in self._get_csharp_files()])
         executable_filename = self._get_executable_filename(testrun)
-        compile_cmd = "mcs -r:Mono.Security -optimize+ {csharp_sources} -out:{executable_filename}".format(**locals())
+
+        if platform.system() == "Windows":
+            compile_cmd = "vsvars32.bat & csc /o+ {csharp_sources} /out:\"{executable_filename}\"".format(**locals())
+        else:
+            compile_cmd = "mcs -r:Mono.Security -optimize+ {csharp_sources} -out:{executable_filename}".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:
             exit_code = subprocess.call(
@@ -39,10 +47,16 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun):
         executable_filename = self._get_executable_filename(testrun)
-        return ["mono", executable_filename]
+        if platform.system() == "Windows":
+            return [executable_filename]
+        else:
+            return ["mono", executable_filename]
 
     def _get_csharp_files(self):
         return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() == ".cs")
 
     def _get_executable_filename(self, testrun):
-        return "{testrun.solution.problem.name}.exe".format(**locals())
+        if platform.system() == "Windows":
+            return os.path.abspath(os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".exe"))
+        else:
+            return testrun.solution.problem.name

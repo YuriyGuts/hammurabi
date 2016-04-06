@@ -17,7 +17,7 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
         subprocess.call("javac -version", shell=True)
 
     def compile(self, testrun):
-        java_sources = ' '.join(self._get_java_files())
+        java_sources = ' '.join(['"{0}"'.format(file) for file in self._get_java_files()])
         compile_cmd = "javac -O -d . {java_sources}".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:

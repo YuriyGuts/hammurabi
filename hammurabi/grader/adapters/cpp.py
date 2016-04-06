@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import hammurabi.utils.fileio as fileio
 
@@ -13,12 +14,19 @@ class CppSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe():
-        subprocess.call("g++ --version", shell=True)
+        if platform.system() == "Windows":
+            subprocess.call("vsvars32.bat & cl", shell=True)
+        else:
+            subprocess.call("g++ --version", shell=True)
 
     def compile(self, testrun):
-        cpp_sources = ' '.join(self._get_cpp_files())
+        cpp_sources = ' '.join(['"{0}"'.format(file) for file in self._get_cpp_files()])
         executable_filename = self._get_executable_filename(testrun)
-        compile_cmd = "g++ -std=c++11 -O3 {cpp_sources} -o {executable_filename}".format(**locals())
+
+        if platform.system() == "Windows":
+            compile_cmd = "vsvars32.bat & cl /Ox /EHsc {cpp_sources} /link /out:\"{executable_filename}\"".format(**locals())
+        else:
+            compile_cmd = "g++ -std=c++11 -O3 {cpp_sources} -o \"{executable_filename}\"".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:
             exit_code = subprocess.call(
@@ -38,10 +46,16 @@ class CppSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun):
         executable_filename = self._get_executable_filename(testrun)
-        return ["./" + executable_filename]
+        if platform.system() == "Windows":
+            return [executable_filename]
+        else:
+            return ["./" + executable_filename]
 
     def _get_cpp_files(self):
         return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() == ".cpp")
 
     def _get_executable_filename(self, testrun):
-        return testrun.solution.problem.name
+        if platform.system() == "Windows":
+            return os.path.abspath(os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".exe"))
+        else:
+            return testrun.solution.problem.name

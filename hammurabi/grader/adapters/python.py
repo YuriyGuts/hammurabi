@@ -12,4 +12,4 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()
-        return ["python", entry_point_file]
+        return ["python", '"{0}"'.format(entry_point_file)]

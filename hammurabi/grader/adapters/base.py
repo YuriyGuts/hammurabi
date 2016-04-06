@@ -67,7 +67,7 @@ class BaseSolutionAdapter(object):
         os.remove(solution_input_filename)
 
     def get_run_command_line(self, testrun):
-        return [self.solution.language, self.get_entry_point_file()]
+        return [self.solution.language, '"{0}"'.format(self.get_entry_point_file())]
 
     def get_run_command_line_string(self, testrun):
         return ' '.join(self.get_run_command_line(testrun))
