@@ -38,8 +38,8 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
                         try:
                             given_items = [self.map_input_item(item) for item in given_line.split()]
                             if correct_items != given_items:
-                                expected = '"{0}"'.format(" ".join(correct_items))
-                                actual = '"{0}"'.format(" ".join(given_items))
+                                expected = '"{0}"'.format(" ".join([str(item) for item in correct_items]))
+                                actual = '"{0}"'.format(" ".join([str(item) for item in given_items]))
                                 testrun.result = TestRunWrongAnswerResult(expected=expected, actual=actual)
                                 return False
                         except:
