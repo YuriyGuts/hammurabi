@@ -56,7 +56,4 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() == ".cs")
 
     def _get_executable_filename(self, testrun):
-        if platform.system() == "Windows":
-            return os.path.abspath(os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".exe"))
-        else:
-            return testrun.solution.problem.name
+        return os.path.abspath(os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".exe"))
