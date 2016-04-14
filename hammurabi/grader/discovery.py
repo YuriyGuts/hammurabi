@@ -37,7 +37,7 @@ from hammurabi.grader.model import *
 
 
 extension_to_language_map = {
-    ".c": "cpp",
+    ".c": "c",
     ".cpp": "cpp",
     ".cs": "csharp",
     ".java": "java",
