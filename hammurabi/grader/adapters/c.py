@@ -18,7 +18,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
             # Just use C++ compiler on Windows.
             subprocess.call("vsvars32.bat & cl", shell=True)
         else:
-            subprocess.call("LANG=C gcc --version", shell=True)
+            subprocess.call("LC_ALL=C LANG=C gcc --version", shell=True)
 
     def compile(self, testrun):
         c_sources = ' '.join(['"{0}"'.format(file) for file in self._get_c_files()])
@@ -28,7 +28,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
             compile_cmd = "vsvars32.bat & cl /Ox /EHsc {c_sources} /link /out:\"{executable_filename}\"".format(**locals())
         else:
             # LANG=C forces gcc to use ASCII instead of UTF-8, so reports don't break when locale is set to UTF-8.
-            compile_cmd = "LANG=C gcc --std=c99 -O2 {c_sources} -o \"{executable_filename}\"".format(**locals())
+            compile_cmd = "LC_ALL=C LANG=C gcc --std=c99 -O2 {c_sources} -o \"{executable_filename}\"".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:
             exit_code = subprocess.call(
