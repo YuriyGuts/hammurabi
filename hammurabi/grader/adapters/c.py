@@ -7,6 +7,7 @@ from hammurabi.grader.adapters.base import BaseSolutionAdapter
 from hammurabi.grader.model import *
 from hammurabi.utils.exceptions import *
 
+
 class CSolutionAdapter(BaseSolutionAdapter):
     def __init__(self, solution):
         super(CSolutionAdapter, self).__init__(solution)
@@ -14,7 +15,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe():
         if platform.system() == "Windows":
-            # just use cpp compiler on windows
+            # Just use C++ compiler on Windows.
             subprocess.call("vsvars32.bat & cl", shell=True)
         else:
             subprocess.call("LANG=C gcc --version", shell=True)
@@ -26,7 +27,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
         if platform.system() == "Windows":
             compile_cmd = "vsvars32.bat & cl /Ox /EHsc {c_sources} /link /out:\"{executable_filename}\"".format(**locals())
         else:
-            # LANG=C forces gcc to use ascii instead utf-8, so reports doesn't breaks when locale is set to utf-8
+            # LANG=C forces gcc to use ASCII instead of UTF-8, so reports don't break when locale is set to UTF-8.
             compile_cmd = "LANG=C gcc --std=c99 -O2 {c_sources} -o \"{executable_filename}\"".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:

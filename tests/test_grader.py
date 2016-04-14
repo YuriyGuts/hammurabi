@@ -63,8 +63,8 @@ def test_all_languages_given_correct_solutions_pass_all_testcases(grader_languag
     with open(testrun_pickle_file, "rb") as pickle_file:
         testruns = pickle.load(pickle_file)
 
-    expected_testrun_length = 60
-    assert len(testruns) == expected_testrun_length, "Could not find results for %d testruns out of %d." % (expected_testrun_length, len(testruns))
+    expected_testrun_length = 70
+    assert len(testruns) == expected_testrun_length, "Could not find results for %d testruns out of %d." % (expected_testrun_length - len(testruns), len(testruns))
 
     unique_languages = [testrun.solution.language for testrun in testruns]
     for language in unique_languages:
@@ -98,6 +98,7 @@ def test_all_languages_given_faulty_solutions_report_proper_errors(grader_verifi
     expected_results_for_author = {
         "charlie-cpp-w": "W",
         "chris-csharp-t": "T",
+        "cindy-c": "E",
         "jane-java-e": "E",
         "john-js-r": "R",
         "peter-python-m": "M",

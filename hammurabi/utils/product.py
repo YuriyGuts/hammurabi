@@ -1,7 +1,7 @@
 import hammurabi.utils.laws as laws
 
 
-version = (0, 2, 3)
+version = (0, 3, 0)
 
 banner = [
     r"       ,,--,,     ",

@@ -19,7 +19,7 @@
     "limits": {
         "memory": 512,
         "time": {
-	    "c": 4,
+            "c": 4,
             "cpp": 4,
             "csharp": 6,
             "java": 8,
