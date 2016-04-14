@@ -172,6 +172,7 @@ def is_correct_answer(testrun):
 
 def adjust_time_for_language(time, language):
     bootstrap_allowances = {
+        "c": 0.0,
         "cpp": 0.0,
         "csharp": 0,
         "java": 30,
@@ -182,6 +183,7 @@ def adjust_time_for_language(time, language):
         "scala": 100
     }
     runtime_slowness_factors = {
+        "c": 1.0,
         "cpp": 1.0,
         "csharp": 1.75,
         "java": 2.0,

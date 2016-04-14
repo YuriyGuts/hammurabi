@@ -187,6 +187,8 @@ def create_adapter(solution):
         return JavaScriptSolutionAdapter(solution)
     elif solution.language == "csharp":
         return CSharpSolutionAdapter(solution)
+    elif solution.language == "c":
+        return CSolutionAdapter(solution)
     elif solution.language == "cpp":
         return CppSolutionAdapter(solution)
     elif solution.language == "ruby":
