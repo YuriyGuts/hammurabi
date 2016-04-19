@@ -16,8 +16,14 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
         subprocess.call("java -version", shell=True)
         subprocess.call("javac -version", shell=True)
 
+    def get_language_name(self):
+        return "java"
+
+    def get_preferred_extensions(self):
+        return [".java"]
+
     def compile(self, testrun):
-        java_sources = ' '.join(['"{0}"'.format(file) for file in self._get_java_files()])
+        java_sources = ' '.join(['"{0}"'.format(file) for file in self.get_source_files()])
         compile_cmd = "javac -O -d . {java_sources}".format(**locals())
 
         with open(testrun.compiler_output_filename, "w") as compiler_output_file:
@@ -45,6 +51,3 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
             class_name = "{package_name}.{class_name}".format(**locals())
 
         return ["java", class_name]
-
-    def _get_java_files(self):
-        return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() == ".java")

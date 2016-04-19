@@ -20,8 +20,14 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
             subprocess.call("mono --version", shell=True)
             subprocess.call("mcs --version", shell=True)
 
+    def get_language_name(self):
+        return "csharp"
+
+    def get_preferred_extensions(self):
+        return [".cs"]
+
     def compile(self, testrun):
-        csharp_sources = ' '.join(['"{0}"'.format(file) for file in self._get_csharp_files()])
+        csharp_sources = ' '.join(['"{0}"'.format(file) for file in self.get_source_files()])
         executable_filename = self._get_executable_filename(testrun)
 
         if platform.system() == "Windows":
@@ -51,9 +57,6 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
             return [executable_filename]
         else:
             return ["mono", executable_filename]
-
-    def _get_csharp_files(self):
-        return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() == ".cs")
 
     def _get_executable_filename(self, testrun):
         return os.path.abspath(os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".exe"))

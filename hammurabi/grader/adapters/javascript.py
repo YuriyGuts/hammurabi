@@ -10,6 +10,12 @@ class JavaScriptSolutionAdapter(BaseSolutionAdapter):
     def describe():
         subprocess.call("node --version", shell=True)
 
+    def get_language_name(self):
+        return "javascript"
+
+    def get_preferred_extensions(self):
+        return [".js"]
+
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()
         return ["node", '"{0}"'.format(entry_point_file)]

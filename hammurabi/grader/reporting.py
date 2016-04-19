@@ -193,10 +193,11 @@ def adjust_time_for_language(time, language):
         "ruby": 5.0,
         "scala": 3.5
     }
+
     slowness_factor_threshold = 50
-    result = (time - bootstrap_allowances[language]) * 1.0
-    if time - bootstrap_allowances[language] > slowness_factor_threshold:
-        result = slowness_factor_threshold + (time - slowness_factor_threshold) * 1.0 / runtime_slowness_factors[language]
+    result = (time - bootstrap_allowances.get(language, 0.0)) * 1.0
+    if time - bootstrap_allowances.get(language, 0.0) > slowness_factor_threshold:
+        result = slowness_factor_threshold + (time - slowness_factor_threshold) * 1.0 / runtime_slowness_factors.get(language, 1.0)
 
     return result
 

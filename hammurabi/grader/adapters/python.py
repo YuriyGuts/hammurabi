@@ -10,6 +10,12 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
     def describe():
         subprocess.call("python --version", shell=True)
 
+    def get_language_name(self):
+        return "python"
+
+    def get_preferred_extensions(self):
+        return [".py"]
+
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()
         return ["python", '"{0}"'.format(entry_point_file)]

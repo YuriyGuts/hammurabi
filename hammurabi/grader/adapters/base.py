@@ -11,14 +11,21 @@ from hammurabi.utils.exceptions import *
 
 class BaseSolutionAdapter(object):
     def __init__(self, solution):
-        self.solution = solution
-        self.config = solution.problem.config
         self.is_compiled = False
-        self.output_dir = os.path.join(self.config.report_output_dir, self.solution.problem.name, self.solution.author)
+        self.solution = solution
+        if solution is not None:
+            self.config = solution.problem.config
+            self.output_dir = os.path.join(self.config.report_output_dir, self.solution.problem.name, self.solution.author)
 
     @staticmethod
     def describe():
         pass
+
+    def get_language_name(self):
+        return None
+
+    def get_preferred_extensions(self):
+        return None
 
     def prepare(self):
         self.clean_output()
@@ -65,6 +72,9 @@ class BaseSolutionAdapter(object):
     def cleanup_testcase(self, testcase):
         solution_input_filename = os.path.join(self.solution.root_dir, self.solution.problem.input_filename)
         os.remove(solution_input_filename)
+
+    def get_source_files(self):
+        return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() in self.get_preferred_extensions())
 
     def get_run_command_line(self, testrun):
         return [self.solution.language, '"{0}"'.format(self.get_entry_point_file())]

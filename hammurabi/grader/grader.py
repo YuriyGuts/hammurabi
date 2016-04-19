@@ -5,10 +5,10 @@ import socket
 import shutil
 import traceback
 import hammurabi.utils.confreader as confreader
+import hammurabi.grader.adapters as adapters
 import hammurabi.grader.discovery as discovery
 import hammurabi.grader.reporting as reporting
 
-from hammurabi.grader.adapters import *
 from hammurabi.grader.model import *
 from hammurabi.grader.verifiers import *
 from hammurabi.utils.exceptions import *
@@ -181,21 +181,8 @@ def judge_testcase(solution, testcase, adapter):
 
 
 def create_adapter(solution):
-    if solution.language == "java":
-        return JavaSolutionAdapter(solution)
-    elif solution.language == "javascript":
-        return JavaScriptSolutionAdapter(solution)
-    elif solution.language == "csharp":
-        return CSharpSolutionAdapter(solution)
-    elif solution.language == "c":
-        return CSolutionAdapter(solution)
-    elif solution.language == "cpp":
-        return CppSolutionAdapter(solution)
-    elif solution.language == "ruby":
-        return RubySolutionAdapter(solution)
-    elif solution.language == "python":
-        return PythonSolutionAdapter(solution)
-    return BaseSolutionAdapter(solution)
+    cls = adapters.registered_adapters.get(solution.language, adapters.BaseSolutionAdapter)
+    return cls(solution)
 
 
 def create_verifier(testrun):

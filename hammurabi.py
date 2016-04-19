@@ -130,19 +130,13 @@ def run_grader(args):
 
 
 def describe_languages(args):
-    import inspect
     import hammurabi.grader.adapters as adapters
 
-    solution_adapter_classes = [
-        cls
-        for name, cls in inspect.getmembers(adapters)
-        if isinstance(cls, type) and issubclass(cls, adapters.BaseSolutionAdapter) and cls != adapters.BaseSolutionAdapter
-    ]
-
-    for cls in solution_adapter_classes:
+    registered_adapters = sorted(adapters.registered_adapters.iteritems(), key=lambda tuple: tuple[0])
+    for language, adapter in registered_adapters:
         print
-        print "---", cls.__name__, "---"
-        cls.describe()
+        print "--- {0} [{1}] ---".format(language, adapter.__name__)
+        adapter.describe()
 
     return 0
 

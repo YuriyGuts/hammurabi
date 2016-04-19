@@ -31,21 +31,25 @@ Builds the object model for the grader assuming the following directory layout:
 
 import copy
 import glob
+import itertools
 import os
 import hammurabi.utils.confreader as confreader
+import hammurabi.grader.adapters as adapters
+
 from hammurabi.grader.model import *
 
 
+# Reshape {language: [ext, ext, ...]} to {ext: [language, language, ...]}.
 extension_to_language_map = {
-    ".c": "c",
-    ".cpp": "cpp",
-    ".cs": "csharp",
-    ".java": "java",
-    ".js": "javascript",
-    ".php": "php",
-    ".py": "python",
-    ".rb": "ruby",
-    ".scala": "scala",
+    ext: [
+        language
+        for language, adapter in adapters.registered_adapters.iteritems()
+        if ext in adapter(None).get_preferred_extensions()
+    ]
+    for ext in list(itertools.chain.from_iterable([
+        adapter(None).get_preferred_extensions()
+        for language, adapter in adapters.registered_adapters.iteritems()
+    ]))
 }
 
 
@@ -131,14 +135,15 @@ def discover_solutions(problem):
 def detect_solution_language(solution):
     language_stats = {}
 
+    # Counting the evidence of each language in the solution folder.
     for root, dirs, files in os.walk(solution.root_dir):
         for file in files:
             filename, extension = [str(component) for component in os.path.splitext(file)]
             if extension in extension_to_language_map:
-                language = extension_to_language_map[extension]
-                if language not in language_stats:
-                    language_stats[language] = 0
-                language_stats[language] += 1
+                for language in extension_to_language_map[extension]:
+                    if language not in language_stats:
+                        language_stats[language] = 0
+                    language_stats[language] += 1
 
     if len(language_stats) == 0:
         return None
@@ -152,6 +157,7 @@ def get_immediate_subdirs(root_dir):
         for subdir in os.listdir(root_dir)
         if os.path.isdir(os.path.join(root_dir, subdir))
     ])
+
 
 def get_files_by_glob_pattern(root_dir, pattern):
     return sorted([filename for filename in glob.glob(os.path.join(root_dir, pattern))])
