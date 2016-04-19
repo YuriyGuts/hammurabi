@@ -1,3 +1,4 @@
+import codecs
 import errno
 import os
 import shutil
@@ -46,7 +47,7 @@ class BaseSolutionAdapter(object):
         compile_cmd = self.get_compile_command_line(testrun)
 
         if compile_cmd is not None:
-            with open(testrun.compiler_output_filename, "w") as compiler_output_file:
+            with codecs.open(testrun.compiler_output_filename, "w", "utf-8") as compiler_output_file:
                 exit_code = subprocess.call(
                     compile_cmd,
                     shell=True,

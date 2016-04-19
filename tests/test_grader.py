@@ -1,3 +1,4 @@
+import codecs
 import os
 import pickle
 import platform
@@ -20,7 +21,7 @@ def get_hammurabi_environment(tmpdir, template_problem_dir):
         report_dir_path = report_dir_path.replace("\\", "/")
         config_file_path = config_file_path.replace("\\", "/")
 
-    with open(config_file_path, "w") as conf:
+    with codecs.open(config_file_path, "w", "utf-8") as conf:
         conf.write("""
             {{
                 "locations": {{

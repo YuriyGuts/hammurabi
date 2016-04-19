@@ -1,3 +1,4 @@
+import codecs
 import pytest
 import hammurabi.utils.confreader as confreader
 from hammurabi.utils.dictview import ObjectDictView
@@ -24,7 +25,7 @@ def filename_for_sample_valid_config(tmpdir):
     file_path = tmpdir.join("config.conf")
     filename = file_path.strpath
 
-    with open(filename, "w") as sample_config:
+    with codecs.open(filename, "w", "utf-8") as sample_config:
         sample_config.write(sample_config_content)
 
     return filename
@@ -35,7 +36,7 @@ def filename_for_invalid_config(tmpdir):
     file_path = tmpdir.join("config_invalid.conf")
     filename = file_path.strpath
 
-    with open(filename, "w") as invalid_config:
+    with codecs.open(filename, "w", "utf-8") as invalid_config:
         invalid_config.write(invalid_config_content)
 
     return filename

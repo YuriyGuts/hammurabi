@@ -1,3 +1,4 @@
+import codecs
 import pytest
 import os
 import hammurabi.utils.fileio as fileio
@@ -15,7 +16,7 @@ def sample_file_path_for_reading(tmpdir):
     filename = file_path.strpath
 
     content_to_write = os.linesep.join(sample_file_lines)
-    with open(filename, "w") as sample_file:
+    with codecs.open(filename, "w", "utf-8") as sample_file:
         sample_file.write(content_to_write)
 
     return filename

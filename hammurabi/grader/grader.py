@@ -111,7 +111,7 @@ def get_report_root_dir(config):
 def get_report_output_dir(config):
     dt = datetime.datetime.now()
     hostname = socket.getfqdn()
-    report_output_dir_name = str(config.get_safe("locations/report_folder_template")).format(**locals())
+    report_output_dir_name = unicode(config.get_safe("locations/report_folder_template")).format(**locals())
     report_output_dir = os.path.join(config.report_root_dir, report_output_dir_name)
     if os.path.exists(report_output_dir):
         shutil.rmtree(report_output_dir, ignore_errors=True)

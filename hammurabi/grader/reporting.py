@@ -41,7 +41,7 @@ def generate_testrun_log_csv(testruns, filename):
                 "score": testrun.result.score,
                 "solution_time": testrun.get_lean_elapsed_milliseconds(),
                 "overall_time": testrun.get_judge_elapsed_milliseconds(),
-                "details": csv_escape_string(str(testrun.result.format_details()))[:1000],
+                "details": csv_escape_string(unicode(testrun.result.format_details()))[:1000],
             })
 
 
