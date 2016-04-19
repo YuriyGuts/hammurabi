@@ -43,7 +43,27 @@ class BaseSolutionAdapter(object):
                 raise Exception("Internal error: cannot create output directory")
 
     def compile(self, testrun):
+        compile_cmd = self.get_compile_command_line(testrun)
+
+        if compile_cmd is not None:
+            with open(testrun.compiler_output_filename, "w") as compiler_output_file:
+                exit_code = subprocess.call(
+                    compile_cmd,
+                    shell=True,
+                    cwd=self.solution.root_dir,
+                    stdout=compiler_output_file,
+                    stderr=compiler_output_file
+                )
+
+            if exit_code != 0:
+                compiler_output = fileio.read_entire_file(testrun.compiler_output_filename)
+                result = TestRunCompilationErrorResult(message=compiler_output)
+                raise TestRunPrematureTerminationError(result)
+
         self.is_compiled = True
+
+    def get_compile_command_line(self, testrun):
+        return None
 
     def get_entry_point_file(self):
         entry_point_file = None

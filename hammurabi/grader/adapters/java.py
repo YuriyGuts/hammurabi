@@ -22,25 +22,9 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
     def get_preferred_extensions(self):
         return [".java"]
 
-    def compile(self, testrun):
+    def get_compile_command_line(self, testrun):
         java_sources = ' '.join(['"{0}"'.format(file) for file in self.get_source_files()])
-        compile_cmd = "javac -O -d . {java_sources}".format(**locals())
-
-        with open(testrun.compiler_output_filename, "w") as compiler_output_file:
-            exit_code = subprocess.call(
-                compile_cmd,
-                shell=True,
-                cwd=self.solution.root_dir,
-                stdout=compiler_output_file,
-                stderr=compiler_output_file
-            )
-
-        if exit_code != 0:
-            compiler_output = fileio.read_entire_file(testrun.compiler_output_filename)
-            result = TestRunCompilationErrorResult(message=compiler_output)
-            raise TestRunPrematureTerminationError(result)
-
-        self.is_compiled = True
+        return "javac -O -d . {java_sources}".format(**locals())
 
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()

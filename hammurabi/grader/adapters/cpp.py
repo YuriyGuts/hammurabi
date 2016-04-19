@@ -25,30 +25,14 @@ class CppSolutionAdapter(BaseSolutionAdapter):
     def get_preferred_extensions(self):
         return [".cpp"]
 
-    def compile(self, testrun):
+    def get_compile_command_line(self, testrun):
         cpp_sources = ' '.join(['"{0}"'.format(file) for file in self.get_source_files()])
         executable_filename = self._get_executable_filename(testrun)
 
         if platform.system() == "Windows":
-            compile_cmd = "vsvars32.bat & cl /Ox /EHsc {cpp_sources} /link /out:\"{executable_filename}\"".format(**locals())
+            return "vsvars32.bat & cl /Ox /EHsc {cpp_sources} /link /out:\"{executable_filename}\"".format(**locals())
         else:
-            compile_cmd = "g++ -std=c++11 -O3 {cpp_sources} -o \"{executable_filename}\"".format(**locals())
-
-        with open(testrun.compiler_output_filename, "w") as compiler_output_file:
-            exit_code = subprocess.call(
-                compile_cmd,
-                shell=True,
-                cwd=self.solution.root_dir,
-                stdout=compiler_output_file,
-                stderr=compiler_output_file
-            )
-
-        if exit_code != 0:
-            compiler_output = fileio.read_entire_file(testrun.compiler_output_filename)
-            result = TestRunCompilationErrorResult(message=compiler_output)
-            raise TestRunPrematureTerminationError(result)
-
-        self.is_compiled = True
+            return "g++ -std=c++11 -O3 {cpp_sources} -o \"{executable_filename}\"".format(**locals())
 
     def get_run_command_line(self, testrun):
         executable_filename = self._get_executable_filename(testrun)
