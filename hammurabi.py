@@ -2,7 +2,6 @@
 
 import argparse
 import os
-import subprocess
 import sys
 
 from hammurabi.grader import adapters
@@ -19,9 +18,6 @@ def main():
 
     if args.command == "grade":
         return run_grader(args)
-
-    if args.command == "server":
-        return run_server(args)
 
     if args.command == "languages":
         return describe_languages(args)
@@ -86,23 +82,10 @@ def parse_command_line_args(args):
         languages_command, help=languages_command_description
     )
 
-    server_command = "server"
-    server_command_description = "Serve a Web application for submitting solutions."
-    server_command_parser = subparsers.add_parser(server_command, help=server_command_description)
-    server_command_parser.add_argument(
-        "--address", dest="address", help="Address to listen on.", default="0.0.0.0", required=False
-    )
-    server_command_parser.add_argument(
-        "--port", dest="port", help="Port to listen on.", default="4266", required=False
-    )
-
     grade_command_parser.prog = grade_command_parser.prog.replace(
         " [COMMAND] [OPTIONS]", ""
     ).replace("usage: ", "")
     languages_command_parser.prog = languages_command_parser.prog.replace(
-        " [COMMAND] [OPTIONS]", ""
-    ).replace("usage: ", "")
-    server_command_parser.prog = server_command_parser.prog.replace(
         " [COMMAND] [OPTIONS]", ""
     ).replace("usage: ", "")
 
@@ -113,7 +96,6 @@ def parse_command_line_args(args):
         subparser_descriptions = [
             (grade_command, grade_command_description, grade_command_parser),
             (languages_command, languages_command_description, languages_command_parser),
-            (server_command, server_command_description, server_command_parser),
         ]
 
         for command, description, parser in subparser_descriptions:
@@ -142,13 +124,6 @@ def describe_languages(args):
         adapter.describe()
 
     return 0
-
-
-def run_server(args):
-    current_dir = os.getcwd()
-    manage_script_path = os.path.join(current_dir, "hammurabi", "web", "manage.py")
-    server_run_command = f"python {manage_script_path} runserver {args.address}:{args.port}"
-    return subprocess.call(server_run_command, shell=True)
 
 
 if __name__ == "__main__":
