@@ -1,10 +1,18 @@
 import time
-import traceback
 
 
-class Problem(object):
-    def __init__(self, name, root_dir, input_filename=None, output_filename=None,
-                 solutions=None, testcases=None, reference_solution=None, config=None):
+class Problem:
+    def __init__(
+        self,
+        name,
+        root_dir,
+        input_filename=None,
+        output_filename=None,
+        solutions=None,
+        testcases=None,
+        reference_solution=None,
+        config=None,
+    ):
         self.name = name
         self.root_dir = root_dir
         self.input_filename = input_filename
@@ -15,10 +23,10 @@ class Problem(object):
         self.config = config
 
     def __str__(self):
-        return "Problem: {self.name}".format(**locals())
+        return f"Problem: {self.name}"
 
 
-class Solution(object):
+class Solution:
     def __init__(self, problem, author, root_dir, files=None, language=None, run_command=None):
         self.problem = problem
         self.author = author
@@ -28,7 +36,7 @@ class Solution(object):
         self.run_command = run_command
 
     def __str__(self):
-        return "Problem: {self.problem.name}   Author: {self.author}   Language: {self.language}".format(**locals())
+        return f"Problem: {self.problem.name}   Author: {self.author}   Language: {self.language}"
 
     def get_file_by_predicate(self, predicate):
         matches = self.get_files_by_predicate(predicate)
@@ -39,7 +47,7 @@ class Solution(object):
         return matches
 
 
-class TestCase(object):
+class TestCase:
     def __init__(self, problem, name, input_filename, correct_answer_filename, score=1):
         self.problem = problem
         self.name = name
@@ -48,12 +56,25 @@ class TestCase(object):
         self.score = score
 
     def __str__(self):
-        return "Problem: {self.problem.name}   Filename: {self.input_filename}   Score: {self.score}".format(**locals())
+        return (
+            f"Problem: {self.problem.name}   Filename: {self.input_filename}   Score: {self.score}"
+        )
 
 
-class TestRun(object):
-    def __init__(self, solution, testcase, output_dir, answer_filename, compiler_output_filename, stdout_filename, stderr_filename,
-                 result=None, memory_limit=None, time_limit=None):
+class TestRun:
+    def __init__(
+        self,
+        solution,
+        testcase,
+        output_dir,
+        answer_filename,
+        compiler_output_filename,
+        stdout_filename,
+        stderr_filename,
+        result=None,
+        memory_limit=None,
+        time_limit=None,
+    ):
         self.solution = solution
         self.testcase = testcase
         self.output_dir = output_dir
@@ -71,7 +92,10 @@ class TestRun(object):
         self.data = {}
 
     def __str__(self):
-        return "Solution: {self.solution.problem.name} / {self.solution.author}, Result: {self.result}".format(**locals())
+        return (
+            f"Solution: {self.solution.problem.name} / {self.solution.author}, "
+            f"Result: {self.result}"
+        )
 
     def record_judge_start_time(self):
         self.judge_start_time = self._get_timestamp()
@@ -97,14 +121,14 @@ class TestRun(object):
         return int(round(time.time() * 1000))
 
 
-class TestRunResult(object):
+class TestRunResult:
     def __init__(self, status_code, status, score=0):
         self.status_code = status_code
         self.status = status
         self.score = score
 
     def __str__(self):
-        return "[{self.status_code}] {self.status}, Score: {self.score}".format(**locals())
+        return f"[{self.status_code}] {self.status}, Score: {self.score}"
 
     def is_correct(self):
         return False
@@ -115,7 +139,7 @@ class TestRunResult(object):
 
 class TestRunCorrectAnswerResult(TestRunResult):
     def __init__(self):
-        super(TestRunCorrectAnswerResult, self).__init__("C", "Correct Answer")
+        super().__init__("C", "Correct Answer")
 
     def is_correct(self):
         return True
@@ -123,7 +147,7 @@ class TestRunCorrectAnswerResult(TestRunResult):
 
 class TestRunWrongAnswerResult(TestRunResult):
     def __init__(self, expected=None, actual=None, custom_message=None):
-        super(TestRunWrongAnswerResult, self).__init__("W", "Wrong Answer")
+        super().__init__("W", "Wrong Answer")
         self.expected = expected
         self.actual = actual
         self.custom_message = custom_message
@@ -131,12 +155,12 @@ class TestRunWrongAnswerResult(TestRunResult):
     def format_details(self):
         if self.custom_message is not None:
             return self.custom_message
-        return "Expected: {self.expected}, Actual: {self.actual}".format(**locals())
+        return f"Expected: {self.expected}, Actual: {self.actual}"
 
 
 class TestRunRuntimeErrorResult(TestRunResult):
     def __init__(self, message):
-        super(TestRunRuntimeErrorResult, self).__init__("R", "Runtime Error")
+        super().__init__("R", "Runtime Error")
         self.message = message
 
     def format_details(self):
@@ -145,7 +169,7 @@ class TestRunRuntimeErrorResult(TestRunResult):
 
 class TestRunFormatErrorResult(TestRunResult):
     def __init__(self, message):
-        super(TestRunFormatErrorResult, self).__init__("F", "Invalid Output Format")
+        super().__init__("F", "Invalid Output Format")
         self.message = message
 
     def format_details(self):
@@ -154,18 +178,18 @@ class TestRunFormatErrorResult(TestRunResult):
 
 class TestRunInternalErrorResult(TestRunResult):
     def __init__(self, exception_info):
-        super(TestRunInternalErrorResult, self).__init__("X", "Judge Internal Error")
+        super().__init__("X", "Judge Internal Error")
         self.exception_info = exception_info
 
     def format_details(self):
         if self.exception_info is None or len(self.exception_info) == 0:
-            return super(TestRunInternalErrorResult, self).format_details()
+            return super().format_details()
         return self.exception_info
 
 
 class TestRunCompilationErrorResult(TestRunResult):
     def __init__(self, message):
-        super(TestRunCompilationErrorResult, self).__init__("E", "Compilation Error")
+        super().__init__("E", "Compilation Error")
         self.message = message
 
     def format_details(self):
@@ -174,12 +198,12 @@ class TestRunCompilationErrorResult(TestRunResult):
 
 class TestRunSolutionMissingResult(TestRunResult):
     def __init__(self):
-        super(TestRunSolutionMissingResult, self).__init__("M", "Solution Missing")
+        super().__init__("M", "Solution Missing")
 
 
 class TestRunUnverifiedResult(TestRunResult):
     def __init__(self, message):
-        super(TestRunUnverifiedResult, self).__init__("U", "Unverified")
+        super().__init__("U", "Unverified")
         self.message = message
 
     def format_details(self):
@@ -188,13 +212,13 @@ class TestRunUnverifiedResult(TestRunResult):
 
 class TestRunTimeoutResult(TestRunResult):
     def __init__(self, timeout):
-        super(TestRunTimeoutResult, self).__init__("T", "Timeout")
+        super().__init__("T", "Timeout")
         self.timeout = timeout
 
     def format_details(self):
-        return "Execution time exceeded the limit of {self.timeout:.2g} seconds".format(**locals())
+        return f"Execution time exceeded the limit of {self.timeout:.2g} seconds"
 
 
-class GraderJobScope(object):
+class GraderJobScope:
     def __init__(self, tasks):
         self.tasks = tasks

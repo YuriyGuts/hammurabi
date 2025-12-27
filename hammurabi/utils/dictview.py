@@ -1,5 +1,8 @@
 class ObjectDictView:
-    """Creates an object-like representation of a dictionary which can also contain nested lists or dictionaries."""
+    """Creates an object-like representation of a dictionary.
+
+    Can also contain nested lists or dictionaries.
+    """
 
     def __init__(self, dictionary):
         self.__dict__ = dictionary
@@ -12,16 +15,18 @@ class ObjectDictView:
 
             # If we have an array, iterate through it and convert sub-dictionaries if there are any.
             if isinstance(self.__dict__[key], list):
-                self.__dict__[key] = [ObjectDictView(item) if isinstance(item, dict) else item
-                                      for item in self.__dict__[key]]
+                self.__dict__[key] = [
+                    ObjectDictView(item) if isinstance(item, dict) else item
+                    for item in self.__dict__[key]
+                ]
 
     def get_safe(self, key, default_value=None):
         key_parts = key.split("/")
         current_dict = self
 
-        for key in key_parts:
-            if key in current_dict.__dict__:
-                current_dict = current_dict.__dict__[key]
+        for key_part in key_parts:
+            if key_part in current_dict.__dict__:
+                current_dict = current_dict.__dict__[key_part]
             else:
                 return default_value
 
@@ -34,7 +39,7 @@ class ObjectDictView:
     def merge_objects(self, obj1, obj2):
         dict1 = obj1.__dict__
         dict2 = obj2.__dict__
-        result = ObjectDictView(dict())
+        result = ObjectDictView({})
 
         for k in set(dict1.keys()).union(dict2.keys()):
             if k in dict1 and k in dict2:

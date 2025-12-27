@@ -1,16 +1,16 @@
 # Load all modules from current directory.
 __all__ = []
 
-import pkgutil
-import inspect
 import importlib
+import inspect
+import pkgutil
 
-for loader, name, is_pkg in pkgutil.walk_packages(__path__):
-    module = importlib.import_module("." + name, __name__)
+for _loader, module_name, _is_pkg in pkgutil.walk_packages(__path__):
+    module = importlib.import_module("." + module_name, __name__)
 
     for name, value in inspect.getmembers(module):
-        if name.startswith('__'):
+        if name.startswith("__"):
             continue
 
         globals()[name] = value
-        __all__.append(name)
+        __all__ += [name]  # noqa: PLE0604 - name is always a string from inspect.getmembers

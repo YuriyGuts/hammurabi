@@ -2,13 +2,27 @@ import colorsys
 import csv
 import datetime
 import os
-import time
 import pickle
-import hammurabi.utils.fileio as fileio
+import time
 
-from hammurabi.grader.model import *
 from jinja2 import FileSystemLoader
 from jinja2.environment import Environment
+
+from hammurabi.grader.model import TestRunCompilationErrorResult
+from hammurabi.grader.model import TestRunCorrectAnswerResult
+from hammurabi.grader.model import TestRunFormatErrorResult
+from hammurabi.grader.model import TestRunInternalErrorResult
+from hammurabi.grader.model import TestRunRuntimeErrorResult
+from hammurabi.grader.model import TestRunSolutionMissingResult
+from hammurabi.grader.model import TestRunTimeoutResult
+from hammurabi.grader.model import TestRunUnverifiedResult
+from hammurabi.grader.model import TestRunWrongAnswerResult
+from hammurabi.utils import fileio
+
+# Constants for CSV escaping
+ASCII_SPACE_ORD = 32
+ASCII_TILDE_ORD = 128
+MICROSECOND_SUFFIX_LEN = 3
 
 
 def pickle_testruns(testruns, filename):
@@ -20,36 +34,56 @@ def generate_testrun_log_csv(testruns, filename):
     testruns = sorted(testruns, key=lambda tr: tr.judge_start_time)
 
     with open(filename, "w") as csv_file:
-        field_names = ["start_time", "end_time", "problem_name", "solution_author", "solution_language",
-                       "testcase_name", "testcase_score", "result_status", "result_description", "score",
-                       "solution_time", "overall_time", "details"]
+        field_names = [
+            "start_time",
+            "end_time",
+            "problem_name",
+            "solution_author",
+            "solution_language",
+            "testcase_name",
+            "testcase_score",
+            "result_status",
+            "result_description",
+            "score",
+            "solution_time",
+            "overall_time",
+            "details",
+        ]
 
         writer = csv.DictWriter(csv_file, fieldnames=field_names)
         writer.writeheader()
 
         for testrun in testruns:
-            writer.writerow({
-                "start_time": testrun.judge_start_time,
-                "end_time": testrun.judge_end_time,
-                "problem_name": testrun.testcase.problem.name,
-                "solution_author": testrun.solution.author,
-                "solution_language": testrun.solution.language,
-                "testcase_name": testrun.testcase.name,
-                "testcase_score": testrun.testcase.score,
-                "result_status": testrun.result.status_code,
-                "result_description": testrun.result.status,
-                "score": testrun.result.score,
-                "solution_time": testrun.get_lean_elapsed_milliseconds(),
-                "overall_time": testrun.get_judge_elapsed_milliseconds(),
-                "details": csv_escape_string(str(testrun.result.format_details()))[:1000],
-            })
+            writer.writerow(
+                {
+                    "start_time": testrun.judge_start_time,
+                    "end_time": testrun.judge_end_time,
+                    "problem_name": testrun.testcase.problem.name,
+                    "solution_author": testrun.solution.author,
+                    "solution_language": testrun.solution.language,
+                    "testcase_name": testrun.testcase.name,
+                    "testcase_score": testrun.testcase.score,
+                    "result_status": testrun.result.status_code,
+                    "result_description": testrun.result.status,
+                    "score": testrun.result.score,
+                    "solution_time": testrun.get_lean_elapsed_milliseconds(),
+                    "overall_time": testrun.get_judge_elapsed_milliseconds(),
+                    "details": csv_escape_string(str(testrun.result.format_details()))[:1000],
+                }
+            )
 
 
 def generate_full_log_html(testruns, filename):
     env = get_jinja_environment()
     report_name = "Solution Execution Log"
     report_date = time.time()
-    content = env.get_template("report-full.html").render(**locals())
+    content = env.get_template("report-full.html").render(
+        env=env,
+        report_name=report_name,
+        report_date=report_date,
+        testruns=testruns,
+        filename=filename,
+    )
     fileio.write_entire_file(filename, content)
 
 
@@ -67,7 +101,14 @@ def generate_matrix_report_html(testruns, filename):
         TestRunSolutionMissingResult(),
         TestRunInternalErrorResult(exception_info=None),
     ]
-    content = env.get_template("report-matrix.html").render(**locals())
+    content = env.get_template("report-matrix.html").render(
+        env=env,
+        report_name=report_name,
+        report_date=report_date,
+        legend_results=legend_results,
+        testruns=testruns,
+        filename=filename,
+    )
     fileio.write_entire_file(filename, content)
 
 
@@ -76,12 +117,14 @@ def generate_heatmap_report_html(testruns, filename):
     for testrun in testruns:
         testrun.__dict__["data"] = {}
         if is_correct_answer(testrun):
-            testrun.data["heatmap_adjusted_time"] = adjust_time_for_language(testrun.get_lean_elapsed_milliseconds(), testrun.solution.language)
+            testrun.data["heatmap_adjusted_time"] = adjust_time_for_language(
+                testrun.get_lean_elapsed_milliseconds(), testrun.solution.language
+            )
         else:
             testrun.data["heatmap_adjusted_time"] = None
 
-    unique_authors = sorted(list({testrun.solution.author for testrun in testruns}))
-    unique_problems = sorted(list({testrun.solution.problem.name for testrun in testruns}))
+    unique_authors = sorted({testrun.solution.author for testrun in testruns})
+    unique_problems = sorted({testrun.solution.problem.name for testrun in testruns})
 
     for problem in unique_problems:
         correct_testruns_for_problem = [
@@ -89,57 +132,71 @@ def generate_heatmap_report_html(testruns, filename):
             for testrun in testruns
             if testrun.solution.problem.name == problem and is_correct_answer(testrun)
         ]
-        times = sorted([
-            testrun.data["heatmap_adjusted_time"]
-            for testrun in correct_testruns_for_problem
-        ])
+        times = sorted(
+            [testrun.data["heatmap_adjusted_time"] for testrun in correct_testruns_for_problem]
+        )
         for testrun in correct_testruns_for_problem:
-            testrun.data["heatmap_percentile"] = percentile(times, testrun.data["heatmap_adjusted_time"])
-            testrun.data["heatmap_heat_color"] = heat_color_for_percentile(testrun.data["heatmap_percentile"])
+            testrun.data["heatmap_percentile"] = percentile(
+                times, testrun.data["heatmap_adjusted_time"]
+            )
+            testrun.data["heatmap_heat_color"] = heat_color_for_percentile(
+                testrun.data["heatmap_percentile"]
+            )
 
     report_name = "Time Heatmap Report"
     report_date = time.time()
 
-    content = env.get_template("report-heatmap.html").render(**locals())
+    content = env.get_template("report-heatmap.html").render(
+        env=env,
+        report_name=report_name,
+        report_date=report_date,
+        unique_authors=unique_authors,
+        unique_problems=unique_problems,
+        testruns=testruns,
+        filename=filename,
+    )
     fileio.write_entire_file(filename, content)
 
 
 def get_jinja_environment():
     env = Environment()
-    template_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "templates"))
+    template_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "resources", "templates")
+    )
     env.loader = FileSystemLoader(template_path)
-    env.filters.update({
-        'format_timestamp': format_timestamp,
-        'format_timestamp_micro': format_timestamp_micro,
-        'dump': dump_preformatted_text,
-        'dump_file': dump_file,
-        'contextual_style': get_contextual_style_by_result,
-        'is_correct_answer': is_correct_answer,
-        'summary_statistics': summary_statistics
-    })
+    env.filters.update(
+        {
+            "format_timestamp": format_timestamp,
+            "format_timestamp_micro": format_timestamp_micro,
+            "dump": dump_preformatted_text,
+            "dump_file": dump_file,
+            "contextual_style": get_contextual_style_by_result,
+            "is_correct_answer": is_correct_answer,
+            "summary_statistics": summary_statistics,
+        }
+    )
     return env
 
 
 def csv_escape_string(string):
-    return ''.join([i if 32 < ord(i) < 128 else ' ' for i in string])
+    return "".join([i if ASCII_SPACE_ORD < ord(i) < ASCII_TILDE_ORD else " " for i in string])
 
 
-def format_timestamp(timestamp, format='%Y-%m-%d %H:%M:%S'):
+def format_timestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
     dt = datetime.datetime.fromtimestamp(timestamp)
     return dt.strftime(format)
 
 
 def format_timestamp_micro(timestamp):
-    datestring = format_timestamp(timestamp / 1000.0, format='%Y-%m-%d %H:%M:%S.%f')
-    if len(datestring) > 3 and datestring[-3:] == "000":
-        return datestring[:-3]
+    datestring = format_timestamp(timestamp / 1000.0, format="%Y-%m-%d %H:%M:%S.%f")
+    if len(datestring) > MICROSECOND_SUFFIX_LEN and datestring[-MICROSECOND_SUFFIX_LEN:] == "000":
+        return datestring[:-MICROSECOND_SUFFIX_LEN]
 
 
 def dump_preformatted_text(content):
     truncate_limit = 1024
-    if content is not None and len(content.strip()) > 0:
-        if len(content) > truncate_limit:
-            content = content[:truncate_limit] + "[content too long, truncated]"
+    if content is not None and len(content.strip()) > 0 and len(content) > truncate_limit:
+        content = content[:truncate_limit] + "[content too long, truncated]"
     return content
 
 
@@ -180,7 +237,7 @@ def adjust_time_for_language(time, language):
         "php": 0,
         "python": 0,
         "ruby": 0,
-        "scala": 100
+        "scala": 100,
     }
     runtime_slowness_factors = {
         "c": 1.0,
@@ -191,13 +248,15 @@ def adjust_time_for_language(time, language):
         "php": 4.5,
         "python": 5.0,
         "ruby": 5.0,
-        "scala": 3.5
+        "scala": 3.5,
     }
 
     slowness_factor_threshold = 50
     result = (time - bootstrap_allowances.get(language, 0.0)) * 1.0
     if time - bootstrap_allowances.get(language, 0.0) > slowness_factor_threshold:
-        result = slowness_factor_threshold + (time - slowness_factor_threshold) * 1.0 / runtime_slowness_factors.get(language, 1.0)
+        result = slowness_factor_threshold + (
+            time - slowness_factor_threshold
+        ) * 1.0 / runtime_slowness_factors.get(language, 1.0)
 
     return result
 
@@ -214,12 +273,12 @@ def summary_statistics(data):
     try:
         mean = sum(data) * 1.0 / len(data)
         variance = sum([(value - mean) ** 2 for value in data]) / len(data)
-        stddev = variance ** 0.5
+        stddev = variance**0.5
         return mean, stddev
-    except:
+    except Exception:
         return None, None
 
 
 def heat_color_for_percentile(percentile):
     (r, g, b) = colorsys.hsv_to_rgb(0.3 * (1.0 - percentile) + 0.048, 0.2, 0.95)
-    return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
+    return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"

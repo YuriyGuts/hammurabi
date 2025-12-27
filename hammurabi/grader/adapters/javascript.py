@@ -1,10 +1,11 @@
 import subprocess
+
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
 
 
 class JavaScriptSolutionAdapter(BaseSolutionAdapter):
     def __init__(self, solution):
-        super(JavaScriptSolutionAdapter, self).__init__(solution)
+        super().__init__(solution)
 
     @staticmethod
     def describe():
@@ -18,4 +19,4 @@ class JavaScriptSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()
-        return ["node", '"{0}"'.format(entry_point_file)]
+        return ["node", f'"{entry_point_file}"']

@@ -1,8 +1,8 @@
+import os
+
+
 def main():
     """Entry point for the hammurabi CLI."""
-    import sys
-    import os
-
     # Get the root directory containing hammurabi.py
     root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     hammurabi_script = os.path.join(root_dir, "hammurabi.py")

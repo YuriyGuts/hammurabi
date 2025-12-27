@@ -1,28 +1,25 @@
-import codecs
-import pytest
 import os
-import hammurabi.utils.fileio as fileio
+
+import pytest
+
+from hammurabi.utils import fileio
+
+sample_file_lines = ["abc 012 abcd 01234", "abcde 01234 abcdef 012345"]
 
 
-sample_file_lines = [
-    "abc 012 abcd 01234",
-    "abcde 01234 abcdef 012345"
-]
-
-
-@pytest.fixture()
+@pytest.fixture
 def sample_file_path_for_reading(tmpdir):
     file_path = tmpdir.join("sample_read_file.txt")
     filename = file_path.strpath
 
     content_to_write = os.linesep.join(sample_file_lines)
-    with codecs.open(filename, "w", "utf-8") as sample_file:
+    with open(filename, "w", encoding="utf-8") as sample_file:
         sample_file.write(content_to_write)
 
     return filename
 
 
-@pytest.fixture()
+@pytest.fixture
 def sample_file_path_for_writing(tmpdir):
     file_path = tmpdir.join("sample_write_file.txt")
     filename = file_path.strpath

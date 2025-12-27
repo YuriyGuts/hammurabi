@@ -12,7 +12,7 @@ def main():
 
 
 def read_input(filename):
-    with open(filename, "r") as input_file:
+    with open(filename) as input_file:
         count = int(input_file.readline())
         return count
 

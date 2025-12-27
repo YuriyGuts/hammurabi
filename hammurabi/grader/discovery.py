@@ -33,11 +33,12 @@ import copy
 import glob
 import itertools
 import os
-import hammurabi.utils.confreader as confreader
-import hammurabi.grader.adapters as adapters
 
-from hammurabi.grader.model import *
-
+from hammurabi.grader import adapters
+from hammurabi.grader.model import Problem
+from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestCase
+from hammurabi.utils import confreader
 
 # Reshape {language: [ext, ext, ...]} to {ext: [language, language, ...]}.
 extension_to_language_map = {
@@ -46,10 +47,14 @@ extension_to_language_map = {
         for language, adapter in adapters.registered_adapters.items()
         if ext in adapter(None).get_preferred_extensions()
     ]
-    for ext in list(itertools.chain.from_iterable([
-        adapter(None).get_preferred_extensions()
-        for language, adapter in adapters.registered_adapters.items()
-    ]))
+    for ext in list(
+        itertools.chain.from_iterable(
+            [
+                adapter(None).get_preferred_extensions()
+                for language, adapter in adapters.registered_adapters.items()
+            ]
+        )
+    )
 }
 
 
@@ -63,8 +68,12 @@ def discover_problems(grader_config):
         problem.config = copy.deepcopy(grader_config)
         problem.config.merge(read_problem_config(problem))
 
-        problem.input_filename = problem.config.get_safe("problem_input_file", default_value=problem.name + ".in")
-        problem.output_filename = problem.config.get_safe("problem_output_file", default_value=problem.name + ".out")
+        problem.input_filename = problem.config.get_safe(
+            "problem_input_file", default_value=problem.name + ".in"
+        )
+        problem.output_filename = problem.config.get_safe(
+            "problem_output_file", default_value=problem.name + ".out"
+        )
 
         problem.testcases = discover_testcases(problem)
         problem.solutions = discover_solutions(problem)
@@ -95,14 +104,14 @@ def discover_testcases(problem):
     for input_filename in get_files_by_glob_pattern(testcase_dir, "*.in"):
         testcase_name, _ = os.path.splitext(os.path.basename(input_filename))
         correct_answer_filename = os.path.join(problem.root_dir, "answers", testcase_name + ".out")
-        score = problem.config.get_safe("testcase_score/{testcase_name}".format(**locals()), default_value=1)
+        score = problem.config.get_safe(f"testcase_score/{testcase_name}", default_value=1)
 
         testcase = TestCase(
             problem=problem,
             name=testcase_name,
             input_filename=input_filename,
             correct_answer_filename=correct_answer_filename,
-            score=score
+            score=score,
         )
         result.append(testcase)
 
@@ -118,12 +127,14 @@ def discover_solutions(problem):
         solution = Solution(problem=problem, author=author, root_dir=solution_dir)
 
         solution.files = []
-        for root, dirs, files in os.walk(solution_dir):
-            solution.files.extend([
-                os.path.join(root, code_file)
-                for code_file in files
-                if os.path.splitext(code_file)[1] in extension_to_language_map
-            ])
+        for root, _dirs, files in os.walk(solution_dir):
+            solution.files.extend(
+                [
+                    os.path.join(root, code_file)
+                    for code_file in files
+                    if os.path.splitext(code_file)[1] in extension_to_language_map
+                ]
+            )
         solution.files = sorted(solution.files)
 
         solution.language = detect_solution_language(solution)
@@ -136,7 +147,7 @@ def detect_solution_language(solution):
     language_stats = {}
 
     # Counting the evidence of each language in the solution folder.
-    for root, dirs, files in os.walk(solution.root_dir):
+    for _root, _dirs, files in os.walk(solution.root_dir):
         for file in files:
             filename, extension = [str(component) for component in os.path.splitext(file)]
             if extension in extension_to_language_map:
@@ -152,12 +163,14 @@ def detect_solution_language(solution):
 
 
 def get_immediate_subdirs(root_dir):
-    return sorted([
-        os.path.join(root_dir, subdir)
-        for subdir in os.listdir(root_dir)
-        if os.path.isdir(os.path.join(root_dir, subdir))
-    ])
+    return sorted(
+        [
+            os.path.join(root_dir, subdir)
+            for subdir in os.listdir(root_dir)
+            if os.path.isdir(os.path.join(root_dir, subdir))
+        ]
+    )
 
 
 def get_files_by_glob_pattern(root_dir, pattern):
-    return sorted([filename for filename in glob.glob(os.path.join(root_dir, pattern))])
+    return sorted(glob.glob(os.path.join(root_dir, pattern)))

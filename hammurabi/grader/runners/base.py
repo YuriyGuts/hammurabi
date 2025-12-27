@@ -1,4 +1,4 @@
-class BaseSolutionRunner(object):
+class BaseSolutionRunner:
     def __init__(self):
         pass
 

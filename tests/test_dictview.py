@@ -1,4 +1,3 @@
-import pytest
 from hammurabi.utils.dictview import ObjectDictView
 
 
@@ -33,10 +32,7 @@ def test_init_when_passed_a_flat_dictionary_creates_a_flat_object():
 
 def test_init_when_passed_an_array_value_creates_an_array_property():
     # Arrange
-    dict_with_array = {
-        "foo": 1,
-        "bars": [2, 3, 4, 5, 6]
-    }
+    dict_with_array = {"foo": 1, "bars": [2, 3, 4, 5, 6]}
 
     # Act
     dict_view = ObjectDictView(dict_with_array)
@@ -55,8 +51,8 @@ def test_init_when_passed_a_nested_dictionary_creates_a_nested_object():
             "level2prop1": 2,
             "level3": {
                 "level3prop1": 3,
-            }
-        }
+            },
+        },
     }
 
     # Act
@@ -83,8 +79,8 @@ def test_get_safe_when_passed_an_existing_key_returns_its_value():
             "level2prop1": 2,
             "level3": {
                 "level3prop1": 3,
-            }
-        }
+            },
+        },
     }
     dict_view = ObjectDictView(nested_dict)
 
@@ -103,8 +99,8 @@ def test_get_safe_when_passed_a_nonexistent_key_returns_default_value():
             "level2prop1": 2,
             "level3": {
                 "level3prop1": 3,
-            }
-        }
+            },
+        },
     }
     dict_view = ObjectDictView(nested_dict)
 
@@ -125,8 +121,8 @@ def test_merge_two_disjoint_objects_returns_a_union_object():
             "level2prop1": 2,
             "level3": {
                 "level3prop1": 3,
-            }
-        }
+            },
+        },
     }
 
     nested_dict2 = {
@@ -135,8 +131,8 @@ def test_merge_two_disjoint_objects_returns_a_union_object():
             "level2prop2": 5,
             "level3": {
                 "level3prop2": 6,
-            }
-        }
+            },
+        },
     }
 
     dict_view1 = ObjectDictView(nested_dict1)
@@ -162,8 +158,8 @@ def test_merge_overlapped_objects_second_object_takes_priority():
             "level2prop1": 2,
             "level3": {
                 "level3prop1": 3,
-            }
-        }
+            },
+        },
     }
 
     nested_dict2 = {
@@ -172,8 +168,8 @@ def test_merge_overlapped_objects_second_object_takes_priority():
             "level2prop1": 5,
             "level3": {
                 "level3prop2": 6,
-            }
-        }
+            },
+        },
     }
 
     dict_view1 = ObjectDictView(nested_dict1)

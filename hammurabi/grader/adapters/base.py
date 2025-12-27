@@ -1,22 +1,29 @@
-import codecs
+import contextlib
 import errno
 import os
 import shutil
 import subprocess
-import hammurabi.utils.fileio as fileio
 
-from hammurabi.grader.model import *
-from hammurabi.grader.runners import *
-from hammurabi.utils.exceptions import *
+from hammurabi.grader.model import TestRun
+from hammurabi.grader.model import TestRunCompilationErrorResult
+from hammurabi.grader.model import TestRunFormatErrorResult
+from hammurabi.grader.model import TestRunRuntimeErrorResult
+from hammurabi.grader.model import TestRunSolutionMissingResult
+from hammurabi.grader.runners import *  # noqa: F403  # Dynamic plugin lookup via globals()
+from hammurabi.utils import fileio
+from hammurabi.utils.exceptions import OutputDirectoryError
+from hammurabi.utils.exceptions import TestRunPrematureTerminationError
 
 
-class BaseSolutionAdapter(object):
+class BaseSolutionAdapter:
     def __init__(self, solution):
         self.is_compiled = False
         self.solution = solution
         if solution is not None:
             self.config = solution.problem.config
-            self.output_dir = os.path.join(self.config.report_output_dir, self.solution.problem.name, self.solution.author)
+            self.output_dir = os.path.join(
+                self.config.report_output_dir, self.solution.problem.name, self.solution.author
+            )
 
     @staticmethod
     def describe():
@@ -32,28 +39,28 @@ class BaseSolutionAdapter(object):
         self.clean_output()
 
     def clean_output(self):
-        try:
+        with contextlib.suppress(OSError):
             os.removedirs(self.output_dir)
-        except:
-            pass
 
         try:
             os.makedirs(self.output_dir)
         except OSError as e:
             if e.errno != errno.EEXIST:
-                raise Exception("Internal error: cannot create output directory")
+                raise OutputDirectoryError("Internal error: cannot create output directory") from e
 
     def compile(self, testrun):
         compile_cmd = self.get_compile_command_line(testrun)
 
         if compile_cmd is not None:
-            with codecs.open(testrun.compiler_output_filename, "w", "utf-8") as compiler_output_file:
+            with open(
+                testrun.compiler_output_filename, "w", encoding="utf-8"
+            ) as compiler_output_file:
                 exit_code = subprocess.call(
                     compile_cmd,
                     shell=True,
                     cwd=self.solution.root_dir,
                     stdout=compiler_output_file,
-                    stderr=compiler_output_file
+                    stderr=compiler_output_file,
                 )
 
             if exit_code != 0:
@@ -73,10 +80,12 @@ class BaseSolutionAdapter(object):
         if len(self.solution.files) == 1:
             entry_point_file = self.solution.files[0]
 
-        # If there's more than one file, the file which has the name of the problem, must be the solution.
+        # If there's more than one file, the file which has the name of the problem,
+        # must be the solution.
         if entry_point_file is None:
             entry_point_file = self.solution.get_file_by_predicate(
-                lambda f: os.path.splitext(os.path.basename(f))[0].lower() == self.solution.problem.name.lower()
+                lambda f: os.path.splitext(os.path.basename(f))[0].lower()
+                == self.solution.problem.name.lower()
             )
 
         # If that fails, try to get the first file with the name 'main' or 'program'.
@@ -87,29 +96,35 @@ class BaseSolutionAdapter(object):
         return entry_point_file
 
     def supply_testcase(self, testcase):
-        solution_input_filename = os.path.join(self.solution.root_dir, self.solution.problem.input_filename)
+        solution_input_filename = os.path.join(
+            self.solution.root_dir, self.solution.problem.input_filename
+        )
         shutil.copyfile(testcase.input_filename, solution_input_filename)
 
     def cleanup_testcase(self, testcase):
-        solution_input_filename = os.path.join(self.solution.root_dir, self.solution.problem.input_filename)
+        solution_input_filename = os.path.join(
+            self.solution.root_dir, self.solution.problem.input_filename
+        )
         os.remove(solution_input_filename)
 
     def get_source_files(self):
-        return self.solution.get_files_by_predicate(lambda f: os.path.splitext(f)[1].lower() in self.get_preferred_extensions())
+        return self.solution.get_files_by_predicate(
+            lambda f: os.path.splitext(f)[1].lower() in self.get_preferred_extensions()
+        )
 
     def get_run_command_line(self, testrun):
-        return [self.solution.language, '"{0}"'.format(self.get_entry_point_file())]
+        return [self.solution.language, f'"{self.get_entry_point_file()}"']
 
     def get_run_command_line_string(self, testrun):
-        return ' '.join(self.get_run_command_line(testrun))
+        return " ".join(self.get_run_command_line(testrun))
 
     def create_testrun(self, testcase):
-        compiler_output_filename = os.path.join(self.output_dir, "compiler_{testcase.name}.log".format(**locals()))
+        compiler_output_filename = os.path.join(self.output_dir, f"compiler_{testcase.name}.log")
         answer_filename = os.path.join(self.output_dir, testcase.name + ".out")
         stdout_filename = os.path.join(self.output_dir, testcase.name + ".stdout")
         stderr_filename = os.path.join(self.output_dir, testcase.name + ".stderr")
         memory_limit = self.config.get_safe("limits/memory")
-        time_limit = self.config.get_safe("limits/time/{self.solution.language}".format(**locals()))
+        time_limit = self.config.get_safe(f"limits/time/{self.solution.language}")
 
         return TestRun(
             solution=self.solution,
@@ -120,7 +135,7 @@ class BaseSolutionAdapter(object):
             stdout_filename=stdout_filename,
             stderr_filename=stderr_filename,
             memory_limit=memory_limit,
-            time_limit=self.config.get_safe("limits/time/{self.solution.language}".format(**locals()))
+            time_limit=time_limit,
         )
 
     def run(self, testrun):
@@ -142,18 +157,22 @@ class BaseSolutionAdapter(object):
         self.collect_output(testrun)
 
     def create_runner(self, testrun, cmd):
-        runner_class = testrun.solution.problem.config.get_safe("runner/name", default_value="SubprocessSolutionRunner")
+        runner_class = testrun.solution.problem.config.get_safe(
+            "runner/name", default_value="SubprocessSolutionRunner"
+        )
         runner = globals()[runner_class]
         return runner()
 
     def collect_output(self, testrun):
-        given_answer_filename = os.path.join(self.solution.root_dir, self.solution.problem.output_filename)
+        given_answer_filename = os.path.join(
+            self.solution.root_dir, self.solution.problem.output_filename
+        )
         if not os.path.exists(given_answer_filename):
             if os.path.getsize(testrun.stderr_filename) > 0:
                 error_text = fileio.read_entire_file(testrun.stderr_filename)
                 result = TestRunRuntimeErrorResult(message=error_text)
             else:
-                msg = "Output file '{self.solution.problem.output_filename}' is empty or missing.".format(**locals())
+                msg = f"Output file '{self.solution.problem.output_filename}' is empty or missing."
                 result = TestRunFormatErrorResult(msg)
             raise TestRunPrematureTerminationError(result)
 

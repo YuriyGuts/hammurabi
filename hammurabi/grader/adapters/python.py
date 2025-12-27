@@ -1,10 +1,11 @@
 import subprocess
+
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
 
 
 class PythonSolutionAdapter(BaseSolutionAdapter):
     def __init__(self, solution):
-        super(PythonSolutionAdapter, self).__init__(solution)
+        super().__init__(solution)
 
     @staticmethod
     def describe():
@@ -18,4 +19,4 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()
-        return ["python", '"{0}"'.format(entry_point_file)]
+        return ["python", f'"{entry_point_file}"']

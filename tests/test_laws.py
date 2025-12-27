@@ -1,5 +1,4 @@
-import pytest
-import hammurabi.utils.laws as laws
+from hammurabi.utils import laws
 
 
 def test_get_random_law_returns_law():

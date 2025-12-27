@@ -1,17 +1,23 @@
 import datetime
 import glob
 import os
-import socket
 import shutil
+import socket
 import traceback
-import hammurabi.utils.confreader as confreader
-import hammurabi.grader.adapters as adapters
-import hammurabi.grader.discovery as discovery
-import hammurabi.grader.reporting as reporting
 
-from hammurabi.grader.model import *
-from hammurabi.grader.verifiers import *
-from hammurabi.utils.exceptions import *
+from hammurabi.grader import adapters
+from hammurabi.grader import discovery
+from hammurabi.grader import reporting
+from hammurabi.grader.model import GraderJobScope
+from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestRun
+from hammurabi.grader.model import TestRunInternalErrorResult
+from hammurabi.grader.model import TestRunSolutionMissingResult
+from hammurabi.grader.model import TestRunUnverifiedResult
+from hammurabi.grader.verifiers import *  # noqa: F403  # Dynamic plugin lookup via globals()
+from hammurabi.utils import confreader
+from hammurabi.utils.exceptions import TestRunPrematureTerminationError
+from hammurabi.utils.exceptions import VerifierCreationError
 
 
 def grade(args):
@@ -25,12 +31,16 @@ def grade(args):
     try:
         for problem in scope.tasks:
             print()
-            print("Judging problem: {problem.name}".format(**locals()))
+            print(f"Judging problem: {problem.name}")
             print("=" * 75)
 
             for solution in scope.tasks[problem]:
                 print()
-                print("Judging solution: {problem.name}   Author: {solution.author}   Language: {solution.language}".format(**locals()))
+                print(
+                    f"Judging solution: {problem.name}   "
+                    f"Author: {solution.author}   "
+                    f"Language: {solution.language}"
+                )
                 print("-" * 75)
 
                 testcases = scope.tasks[problem][solution]
@@ -52,26 +62,31 @@ def read_config(args):
         config_file = os.path.join(config_dir, "grader.conf")
 
     if not os.path.exists(config_file):
-        raise EnvironmentError("Configuration file '{config_file}' not found. Please create one or copy it from grader.conf.template.".format(**locals()))
+        raise OSError(
+            f"Configuration file '{config_file}' not found. "
+            "Please create one or copy it from grader.conf.template."
+        )
     return confreader.read_config(config_file)
 
 
 def get_scope(problems, args, config):
     tasks = {}
     problems_to_run = [
-        problem
-        for problem in problems
-        if args.problem is None or problem.name in args.problem
+        problem for problem in problems if args.problem is None or problem.name in args.problem
     ]
 
     for problem in problems_to_run:
         tasks[problem] = {}
 
-        solutions_to_run = [
-            solution
-            for solution in problem.solutions
-            if args.author is None or solution.author in args.author
-        ] if not args.reference else [problem.reference_solution]
+        solutions_to_run = (
+            [
+                solution
+                for solution in problem.solutions
+                if args.author is None or solution.author in args.author
+            ]
+            if not args.reference
+            else [problem.reference_solution]
+        )
 
         testcases_to_run = [
             testcase
@@ -97,21 +112,27 @@ def apply_locations_to_config(config):
 def get_problem_root_dir(config):
     problem_root_dir = config.get_safe("locations/problem_root", default_value="grader/problems")
     if not os.path.isabs(problem_root_dir):
-        problem_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, problem_root_dir))
+        problem_root_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), os.pardir, problem_root_dir)
+        )
     return problem_root_dir
 
 
 def get_report_root_dir(config):
     report_root_dir = config.get_safe("locations/report_root", default_value="grader/reports")
     if not os.path.isabs(report_root_dir):
-        report_root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, report_root_dir))
+        report_root_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), os.pardir, report_root_dir)
+        )
     return report_root_dir
 
 
 def get_report_output_dir(config):
     dt = datetime.datetime.now()
     hostname = socket.getfqdn()
-    report_output_dir_name = str(config.get_safe("locations/report_folder_template")).format(**locals())
+    report_output_dir_name = str(config.get_safe("locations/report_folder_template")).format(
+        dt=dt, hostname=hostname
+    )
     report_output_dir = os.path.join(config.report_root_dir, report_output_dir_name)
     if os.path.exists(report_output_dir):
         shutil.rmtree(report_output_dir, ignore_errors=True)
@@ -123,7 +144,7 @@ def judge_solution(solution, testcases):
     try:
         adapter = create_adapter(solution)
         adapter.prepare()
-    except:
+    except Exception:
         print("Cannot create solution adapter.")
         traceback.print_exc()
         return []
@@ -132,7 +153,10 @@ def judge_solution(solution, testcases):
     for testcase in testcases:
         testrun = None
         try:
-            print("Running test case: {testcase.name} (score: {testcase.score})".format(**locals()), end=" ")
+            print(
+                f"Running test case: {testcase.name} (score: {testcase.score})",
+                end=" ",
+            )
             testrun = judge_testcase(solution, testcase, adapter)
         except KeyboardInterrupt:
             raise
@@ -142,7 +166,10 @@ def judge_solution(solution, testcases):
         judge_time_elapsed = testrun.get_judge_elapsed_milliseconds()
         judge_overhead = judge_time_elapsed - lean_time_elapsed
 
-        print("-> {testrun.result}, Time: {lean_time_elapsed} ms, Overall time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals()))
+        print(
+            f"-> {testrun.result}, Time: {lean_time_elapsed} ms, "
+            f"Overall time: {judge_time_elapsed} (+{judge_overhead}) ms"
+        )
         if isinstance(testrun.result, TestRunInternalErrorResult):
             print(testrun.result.format_details())
 
@@ -159,9 +186,11 @@ def judge_testcase(solution, testcase, adapter):
 
         if solution != solution.problem.reference_solution:
             verifier = create_verifier(testrun)
-            is_correct = verifier.verify(testrun)
+            verifier.verify(testrun)
         else:
-            testrun.result = TestRunUnverifiedResult("Verification ignored - running the reference solution.")
+            testrun.result = TestRunUnverifiedResult(
+                "Verification ignored - running the reference solution."
+            )
 
     except TestRunPrematureTerminationError as e:
         testrun.result = e.result
@@ -169,7 +198,7 @@ def judge_testcase(solution, testcase, adapter):
     except KeyboardInterrupt:
         raise
 
-    except:
+    except Exception:
         testrun.result = TestRunInternalErrorResult(exception_info=traceback.format_exc())
 
     if testrun.result.is_correct():
@@ -187,28 +216,46 @@ def create_adapter(solution):
 
 def create_verifier(testrun):
     try:
-        verifier_class = testrun.solution.problem.config.get_safe("verifier", default_value="AnswerVerifier")
+        verifier_class = testrun.solution.problem.config.get_safe(
+            "verifier", default_value="AnswerVerifier"
+        )
         verifier = globals()[verifier_class]
         return verifier()
-    except:
-        raise EnvironmentError("Cannot create verifier '{verifier_class}'".format(**locals()))
+    except Exception as e:
+        raise VerifierCreationError(f"Cannot create verifier '{verifier_class}'") from e
 
 
 def fill_testruns_for_missing_solutions(testruns):
     padded_testruns = testruns
-    unique_authors = sorted(list({testrun.solution.author for testrun in testruns}))
-    unique_problems = sorted(list({testrun.solution.problem.name for testrun in testruns}))
+    unique_authors = sorted({testrun.solution.author for testrun in testruns})
+    unique_problems = sorted({testrun.solution.problem.name for testrun in testruns})
 
     for problem in unique_problems:
         for author in unique_authors:
-
-            # If this author hasn't attempted this problem, create fake testruns with 'Solution Missing' result.
-            if not any(testrun.solution.author == author and testrun.solution.problem.name == problem for testrun in testruns):
-                problem_obj = next((testrun.solution.problem for testrun in testruns if testrun.solution.problem.name == problem))
+            # If this author hasn't attempted this problem,
+            # create fake testruns with 'Solution Missing' result.
+            if not any(
+                testrun.solution.author == author and testrun.solution.problem.name == problem
+                for testrun in testruns
+            ):
+                problem_obj = next(
+                    testrun.solution.problem
+                    for testrun in testruns
+                    if testrun.solution.problem.name == problem
+                )
                 solution = Solution(problem_obj, author, None)
 
                 for testcase in problem_obj.testcases:
-                    fake_testrun = TestRun(solution, testcase, None, None, None, None, None, result=TestRunSolutionMissingResult())
+                    fake_testrun = TestRun(
+                        solution,
+                        testcase,
+                        None,
+                        None,
+                        None,
+                        None,
+                        None,
+                        result=TestRunSolutionMissingResult(),
+                    )
                     fake_testrun.record_judge_start_time()
                     fake_testrun.record_lean_start_time()
                     fake_testrun.record_lean_end_time()
@@ -237,7 +284,9 @@ def generate_reports(config, testruns):
     reporting.generate_heatmap_report_html(testruns, heatmap_html_report_location)
 
     # Copy the stylesheets used by the reports.
-    for css in glob.glob(os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "styles", "*.css"))):
+    for css in glob.glob(
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "styles", "*.css"))
+    ):
         shutil.copy(css, config.report_output_dir)
 
     print()

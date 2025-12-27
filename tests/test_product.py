@@ -1,5 +1,4 @@
-import pytest
-import hammurabi.utils.product as product
+from hammurabi.utils import product
 
 
 def test_get_version_string_returns_valid_version_string():
@@ -18,4 +17,4 @@ def test_get_banner_returns_non_empty_banner():
     # Assert
     assert isinstance(banner, list)
     assert len(banner) > 0
-    assert not any([len(line) > product._terminal_width for line in banner])
+    assert not any(len(line) > product._terminal_width for line in banner)
