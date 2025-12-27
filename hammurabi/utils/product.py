@@ -50,7 +50,7 @@ def get_banner():
 def print_banner():
     banner = get_banner()
     for line in banner:
-        print line
+        print(line)
 
 
 def _expand_banner_line(line, expansion_text):

@@ -8,6 +8,6 @@ def read_config(config_filename):
             config = ObjectDictView(json.load(config_file))
             return config
     except:
-        print "Cannot load configuration file: {config_filename}".format(**locals())
-        print
+        print("Cannot load configuration file: {config_filename}".format(**locals()))
+        print()
         raise

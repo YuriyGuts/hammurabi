@@ -43,12 +43,12 @@ from hammurabi.grader.model import *
 extension_to_language_map = {
     ext: [
         language
-        for language, adapter in adapters.registered_adapters.iteritems()
+        for language, adapter in adapters.registered_adapters.items()
         if ext in adapter(None).get_preferred_extensions()
     ]
     for ext in list(itertools.chain.from_iterable([
         adapter(None).get_preferred_extensions()
-        for language, adapter in adapters.registered_adapters.iteritems()
+        for language, adapter in adapters.registered_adapters.items()
     ]))
 }
 
@@ -138,7 +138,7 @@ def detect_solution_language(solution):
     # Counting the evidence of each language in the solution folder.
     for root, dirs, files in os.walk(solution.root_dir):
         for file in files:
-            filename, extension = [unicode(component) for component in os.path.splitext(file)]
+            filename, extension = [str(component) for component in os.path.splitext(file)]
             if extension in extension_to_language_map:
                 for language in extension_to_language_map[extension]:
                     if language not in language_stats:

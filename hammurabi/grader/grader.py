@@ -24,14 +24,14 @@ def grade(args):
 
     try:
         for problem in scope.tasks:
-            print
-            print "Judging problem: {problem.name}".format(**locals())
-            print "=" * 75
+            print()
+            print("Judging problem: {problem.name}".format(**locals()))
+            print("=" * 75)
 
             for solution in scope.tasks[problem]:
-                print
-                print "Judging solution: {problem.name}   Author: {solution.author}   Language: {solution.language}".format(**locals())
-                print "-" * 75
+                print()
+                print("Judging solution: {problem.name}   Author: {solution.author}   Language: {solution.language}".format(**locals()))
+                print("-" * 75)
 
                 testcases = scope.tasks[problem][solution]
                 solution_testruns = judge_solution(solution, testcases)
@@ -111,7 +111,7 @@ def get_report_root_dir(config):
 def get_report_output_dir(config):
     dt = datetime.datetime.now()
     hostname = socket.getfqdn()
-    report_output_dir_name = unicode(config.get_safe("locations/report_folder_template")).format(**locals())
+    report_output_dir_name = str(config.get_safe("locations/report_folder_template")).format(**locals())
     report_output_dir = os.path.join(config.report_root_dir, report_output_dir_name)
     if os.path.exists(report_output_dir):
         shutil.rmtree(report_output_dir, ignore_errors=True)
@@ -124,7 +124,7 @@ def judge_solution(solution, testcases):
         adapter = create_adapter(solution)
         adapter.prepare()
     except:
-        print "Cannot create solution adapter."
+        print("Cannot create solution adapter.")
         traceback.print_exc()
         return []
 
@@ -132,7 +132,7 @@ def judge_solution(solution, testcases):
     for testcase in testcases:
         testrun = None
         try:
-            print "Running test case: {testcase.name} (score: {testcase.score})".format(**locals()),
+            print("Running test case: {testcase.name} (score: {testcase.score})".format(**locals()), end=" ")
             testrun = judge_testcase(solution, testcase, adapter)
         except KeyboardInterrupt:
             raise
@@ -142,9 +142,9 @@ def judge_solution(solution, testcases):
         judge_time_elapsed = testrun.get_judge_elapsed_milliseconds()
         judge_overhead = judge_time_elapsed - lean_time_elapsed
 
-        print "-> {testrun.result}, Time: {lean_time_elapsed} ms, Overall time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals())
+        print("-> {testrun.result}, Time: {lean_time_elapsed} ms, Overall time: {judge_time_elapsed} (+{judge_overhead}) ms".format(**locals()))
         if isinstance(testrun.result, TestRunInternalErrorResult):
-            print testrun.result.format_details()
+            print(testrun.result.format_details())
 
         testruns.append(testrun)
 
@@ -240,11 +240,11 @@ def generate_reports(config, testruns):
     for css in glob.glob(os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "styles", "*.css"))):
         shutil.copy(css, config.report_output_dir)
 
-    print
-    print "Reports:"
-    print "--------"
-    print "Pickled test runs:", pickle_location
-    print "CSV log:", testrun_csv_log_location
-    print "Detailed HTML log:", full_html_log_location
-    print "Matrix HTML report:", matrix_html_report_location
-    print "Heatmap HTML report:", heatmap_html_report_location
+    print()
+    print("Reports:")
+    print("--------")
+    print("Pickled test runs:", pickle_location)
+    print("CSV log:", testrun_csv_log_location)
+    print("Detailed HTML log:", full_html_log_location)
+    print("Matrix HTML report:", matrix_html_report_location)
+    print("Heatmap HTML report:", heatmap_html_report_location)

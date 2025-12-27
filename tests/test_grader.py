@@ -106,6 +106,6 @@ def test_all_languages_given_faulty_solutions_report_proper_errors(grader_verifi
         "rose-ruby-f": "F"
     }
 
-    for author, result_code in expected_results_for_author.iteritems():
+    for author, result_code in expected_results_for_author.items():
         message = "The solution '{author}' should have been verified as '[{result_code}]'.".format(**locals())
         assert all(testrun.result.status_code == result_code for testrun in testruns if testrun.solution.author == author), message

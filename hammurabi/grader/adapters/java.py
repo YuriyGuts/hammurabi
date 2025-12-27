@@ -28,8 +28,8 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun):
         entry_point_file = self.get_entry_point_file()
-        package_name = fileio.grep_value_from_file(entry_point_file, "package\s+([^\s;]+);", group_num=1)
-        class_name = fileio.grep_value_from_file(entry_point_file, "class\s+(\w+)[^\w]+", group_num=1)
+        package_name = fileio.grep_value_from_file(entry_point_file, r"package\s+([^\s;]+);", group_num=1)
+        class_name = fileio.grep_value_from_file(entry_point_file, r"class\s+(\w+)[^\w]+", group_num=1)
 
         if package_name is not None:
             class_name = "{package_name}.{class_name}".format(**locals())

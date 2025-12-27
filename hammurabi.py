@@ -110,10 +110,10 @@ def parse_command_line_args(args):
         ]
 
         for command, description, parser in subparser_descriptions:
-            print ""
-            print "-" * 30, "COMMAND:", command, "-" * 30
-            print description
-            print ""
+            print("")
+            print("-" * 30, "COMMAND:", command, "-" * 30)
+            print(description)
+            print("")
             parser.print_help()
 
         sys.exit(ERROR_INVALID_ARGS)
@@ -132,10 +132,10 @@ def run_grader(args):
 def describe_languages(args):
     import hammurabi.grader.adapters as adapters
 
-    registered_adapters = sorted(adapters.registered_adapters.iteritems(), key=lambda tuple: tuple[0])
+    registered_adapters = sorted(adapters.registered_adapters.items(), key=lambda tuple: tuple[0])
     for language, adapter in registered_adapters:
-        print
-        print "--- {0} [{1}] ---".format(language, adapter.__name__)
+        print()
+        print("--- {0} [{1}] ---".format(language, adapter.__name__))
         adapter.describe()
 
     return 0
