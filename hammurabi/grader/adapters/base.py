@@ -1,8 +1,13 @@
+"""Base adapter for running solutions."""
+
+from __future__ import annotations
+
 import contextlib
 import errno
 import os
 import shutil
 import subprocess
+from typing import TYPE_CHECKING
 
 from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunCompilationErrorResult
@@ -14,9 +19,16 @@ from hammurabi.utils import fileio
 from hammurabi.utils.exceptions import OutputDirectoryError
 from hammurabi.utils.exceptions import TestRunPrematureTerminationError
 
+if TYPE_CHECKING:
+    from hammurabi.grader.model import Solution
+    from hammurabi.grader.model import TestCase
+    from hammurabi.grader.runners.base import BaseSolutionRunner
+
 
 class BaseSolutionAdapter:
-    def __init__(self, solution):
+    """Base class for language-specific solution adapters."""
+
+    def __init__(self, solution: Solution | None) -> None:
         self.is_compiled = False
         self.solution = solution
         if solution is not None:
@@ -26,19 +38,24 @@ class BaseSolutionAdapter:
             )
 
     @staticmethod
-    def describe():
+    def describe() -> None:
+        """Print version information for the language runtime."""
         pass
 
-    def get_language_name(self):
+    def get_language_name(self) -> str | None:
+        """Return the language identifier."""
         return None
 
-    def get_preferred_extensions(self):
+    def get_preferred_extensions(self) -> list[str] | None:
+        """Return file extensions associated with this language."""
         return None
 
-    def prepare(self):
+    def prepare(self) -> None:
+        """Prepare the adapter for running solutions."""
         self.clean_output()
 
-    def clean_output(self):
+    def clean_output(self) -> None:
+        """Clean and recreate the output directory."""
         with contextlib.suppress(OSError):
             os.removedirs(self.output_dir)
 
@@ -48,7 +65,8 @@ class BaseSolutionAdapter:
             if e.errno != errno.EEXIST:
                 raise OutputDirectoryError("Internal error: cannot create output directory") from e
 
-    def compile(self, testrun):
+    def compile(self, testrun: TestRun) -> None:
+        """Compile the solution if required."""
         compile_cmd = self.get_compile_command_line(testrun)
 
         if compile_cmd is not None:
@@ -70,10 +88,12 @@ class BaseSolutionAdapter:
 
         self.is_compiled = True
 
-    def get_compile_command_line(self, testrun):
+    def get_compile_command_line(self, testrun: TestRun) -> str | None:
+        """Return the compilation command, or None if not needed."""
         return None
 
-    def get_entry_point_file(self):
+    def get_entry_point_file(self) -> str | None:
+        """Determine the main entry point file for the solution."""
         entry_point_file = None
 
         # If there's only one file, it must be the solution.
@@ -95,36 +115,42 @@ class BaseSolutionAdapter:
             )
         return entry_point_file
 
-    def supply_testcase(self, testcase):
+    def supply_testcase(self, testcase: TestCase) -> None:
+        """Copy the test case input to the solution directory."""
         solution_input_filename = os.path.join(
             self.solution.root_dir, self.solution.problem.input_filename
         )
         shutil.copyfile(testcase.input_filename, solution_input_filename)
 
-    def cleanup_testcase(self, testcase):
+    def cleanup_testcase(self, testcase: TestCase) -> None:
+        """Remove the test case input from the solution directory."""
         solution_input_filename = os.path.join(
             self.solution.root_dir, self.solution.problem.input_filename
         )
         os.remove(solution_input_filename)
 
-    def get_source_files(self):
+    def get_source_files(self) -> list[str]:
+        """Return all source files for the solution."""
         return self.solution.get_files_by_predicate(
-            lambda f: os.path.splitext(f)[1].lower() in self.get_preferred_extensions()
+            lambda f: os.path.splitext(f)[1].lower() in (self.get_preferred_extensions() or [])
         )
 
-    def get_run_command_line(self, testrun):
-        return [self.solution.language, f'"{self.get_entry_point_file()}"']
+    def get_run_command_line(self, testrun: TestRun) -> list[str]:
+        """Return the command to run the solution."""
+        return [self.solution.language or "", f'"{self.get_entry_point_file()}"']
 
-    def get_run_command_line_string(self, testrun):
+    def get_run_command_line_string(self, testrun: TestRun) -> str:
+        """Return the command to run the solution as a string."""
         return " ".join(self.get_run_command_line(testrun))
 
-    def create_testrun(self, testcase):
+    def create_testrun(self, testcase: TestCase) -> TestRun:
+        """Create a TestRun instance for a test case."""
         compiler_output_filename = os.path.join(self.output_dir, f"compiler_{testcase.name}.log")
         answer_filename = os.path.join(self.output_dir, testcase.name + ".out")
         stdout_filename = os.path.join(self.output_dir, testcase.name + ".stdout")
         stderr_filename = os.path.join(self.output_dir, testcase.name + ".stderr")
-        memory_limit = self.config.get_safe("limits/memory")
-        time_limit = self.config.get_safe(f"limits/time/{self.solution.language}")
+        memory_limit = self.config.limits.memory
+        time_limit = self.config.limits.time.get_for_language(self.solution.language)
 
         return TestRun(
             solution=self.solution,
@@ -138,7 +164,8 @@ class BaseSolutionAdapter:
             time_limit=time_limit,
         )
 
-    def run(self, testrun):
+    def run(self, testrun: TestRun) -> None:
+        """Run the solution for a test case."""
         if self.get_entry_point_file() is None:
             result = TestRunSolutionMissingResult()
             raise TestRunPrematureTerminationError(result)
@@ -156,14 +183,14 @@ class BaseSolutionAdapter:
 
         self.collect_output(testrun)
 
-    def create_runner(self, testrun, cmd):
-        runner_class = testrun.solution.problem.config.get_safe(
-            "runner/name", default_value="SubprocessSolutionRunner"
-        )
+    def create_runner(self, testrun: TestRun, cmd: str) -> BaseSolutionRunner:
+        """Create the appropriate runner for the solution."""
+        runner_class = testrun.solution.problem.config.runner.name
         runner = globals()[runner_class]
         return runner()
 
-    def collect_output(self, testrun):
+    def collect_output(self, testrun: TestRun) -> None:
+        """Collect the solution output after execution."""
         given_answer_filename = os.path.join(
             self.solution.root_dir, self.solution.problem.output_filename
         )

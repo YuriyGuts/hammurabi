@@ -1,6 +1,19 @@
+"""Base runner for executing solutions."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from hammurabi.grader.model import TestRun
+
+
 class BaseSolutionRunner:
-    def __init__(self):
+    """Base class for solution runners."""
+
+    def __init__(self) -> None:
         pass
 
-    def run(self, testrun, cmd):
+    def run(self, testrun: TestRun, cmd: str) -> None:
+        """Run a solution command for a test run."""
         pass

@@ -1,9 +1,11 @@
-# Load all modules from current directory.
-__all__ = []
+"""Solution runners for executing solutions."""
 
 import importlib
 import inspect
 import pkgutil
+
+# Load all modules from the current directory.
+__all__: list[str] = []
 
 for _loader, module_name, _is_pkg in pkgutil.walk_packages(__path__):
     module = importlib.import_module("." + module_name, __name__)

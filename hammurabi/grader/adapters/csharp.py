@@ -1,24 +1,35 @@
+"""C# solution adapter."""
+
+from __future__ import annotations
+
 import os
 import subprocess
+from typing import TYPE_CHECKING
 
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
 
+if TYPE_CHECKING:
+    from hammurabi.grader.model import Solution
+    from hammurabi.grader.model import TestRun
+
 
 class CSharpSolutionAdapter(BaseSolutionAdapter):
-    def __init__(self, solution):
+    """Adapter for running C# solutions using .NET."""
+
+    def __init__(self, solution: Solution | None) -> None:
         super().__init__(solution)
 
     @staticmethod
-    def describe():
+    def describe() -> None:
         subprocess.call("dotnet --version", shell=True)
 
-    def get_language_name(self):
+    def get_language_name(self) -> str:
         return "csharp"
 
-    def get_preferred_extensions(self):
+    def get_preferred_extensions(self) -> list[str]:
         return [".cs"]
 
-    def get_compile_command_line(self, testrun):
+    def get_compile_command_line(self, testrun: TestRun) -> str:
         # Create a temporary .csproj file for dotnet build
         project_name = testrun.solution.problem.name
         project_dir = testrun.solution.root_dir
@@ -64,12 +75,12 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         # Return the build command
         return f'cd "{project_dir}" && dotnet build "{csproj_path}" -c Release -o "{project_dir}"'
 
-    def get_run_command_line(self, testrun):
+    def get_run_command_line(self, testrun: TestRun) -> list[str]:
         project_name = testrun.solution.problem.name
         dll_filename = os.path.join(testrun.solution.root_dir, f"{project_name}.dll")
         return ["dotnet", dll_filename]
 
-    def _get_executable_filename(self, testrun):
+    def _get_executable_filename(self, testrun: TestRun) -> str:
         # For compatibility, though we now use DLLs
         return os.path.abspath(
             os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".dll")

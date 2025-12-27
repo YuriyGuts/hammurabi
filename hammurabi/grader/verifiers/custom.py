@@ -1,15 +1,25 @@
-# Place your custom verifier classes here, or create a dedicated .py file in this folder.
+"""Custom verifier template for problem-specific verification logic."""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunWrongAnswerResult
 from hammurabi.grader.verifiers.common import AnswerVerifier
 
+if TYPE_CHECKING:
+    from hammurabi.grader.model import TestRun
+
 
 class MyCustomVerifier(AnswerVerifier):
-    def __init__(self):
+    """Example custom verifier template."""
+
+    def __init__(self) -> None:
         super().__init__()
 
-    def verify(self, testrun):
+    def verify(self, testrun: TestRun) -> bool:
+        """Verify the answer with custom logic."""
         with open(testrun.answer_filename), open(testrun.testcase.correct_answer_filename):
             # ...
             # Read and compare stuff here.

@@ -1,30 +1,45 @@
+"""Common answer verification classes."""
+
+from __future__ import annotations
+
 import filecmp
 import sys
+from typing import TYPE_CHECKING
+from typing import Any
 
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunFormatErrorResult
 from hammurabi.grader.model import TestRunWrongAnswerResult
 
+if TYPE_CHECKING:
+    from hammurabi.grader.model import TestRun
+
 
 class AnswerVerifier:
-    def __init__(self):
+    """Byte-by-byte file comparison verifier."""
+
+    def __init__(self) -> None:
         pass
 
-    def verify(self, testrun):
-        # Use strict byte-by-byte comparison by default.
+    def verify(self, testrun: TestRun) -> bool:
+        """Verify the answer using strict byte-by-byte comparison."""
         return filecmp.cmp(
             testrun.answer_filename, testrun.testcase.correct_answer_filename, shallow=False
         )
 
 
 class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
-    def __init__(self):
+    """Verifier for space-separated value sequences."""
+
+    def __init__(self) -> None:
         super().__init__()
 
-    def map_input_item(self, item):
+    def map_input_item(self, item: str) -> Any:
+        """Map an input item to its compared type."""
         return str(item)
 
-    def verify(self, testrun):
+    def verify(self, testrun: TestRun) -> bool:
+        """Verify by comparing space-separated tokens line by line."""
         with (
             open(testrun.answer_filename) as given_answer_file,
             open(testrun.testcase.correct_answer_filename) as correct_answer_file,
@@ -34,7 +49,7 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
                 try:
                     given_line = given_answer_file.readline()
                 except Exception:
-                    exc_type, exc, tb = sys.exc_info()
+                    _exc_type, exc, _tb = sys.exc_info()
                     testrun.result = TestRunFormatErrorResult(message=str(exc))
                     return False
 
@@ -53,7 +68,7 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
                             )
                             return False
                     except Exception:
-                        exc_type, exc, tb = sys.exc_info()
+                        _exc_type, exc, _tb = sys.exc_info()
                         testrun.result = TestRunFormatErrorResult(message=str(exc))
                         return False
 
@@ -73,21 +88,27 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
 
 
 class IntegerSequenceVerifier(SpaceCharacterSeparatedSequenceVerifier):
-    def __init__(self):
+    """Verifier for integer sequences."""
+
+    def __init__(self) -> None:
         super().__init__()
 
-    def map_input_item(self, item):
+    def map_input_item(self, item: str) -> int:
         return int(item)
 
 
 class FloatSequenceVerifier(SpaceCharacterSeparatedSequenceVerifier):
-    def __init__(self):
+    """Verifier for floating-point sequences."""
+
+    def __init__(self) -> None:
         super().__init__()
 
-    def map_input_item(self, item):
+    def map_input_item(self, item: str) -> float:
         return float(item)
 
 
 class WordSequenceVerifier(SpaceCharacterSeparatedSequenceVerifier):
-    def __init__(self):
+    """Verifier for word sequences (same as base, for explicitness)."""
+
+    def __init__(self) -> None:
         super().__init__()

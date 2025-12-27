@@ -1,9 +1,14 @@
+"""Report generation for grading results."""
+
+from __future__ import annotations
+
 import colorsys
 import csv
 import datetime
 import os
 import pickle
 import time
+from typing import TYPE_CHECKING
 
 from jinja2 import FileSystemLoader
 from jinja2.environment import Environment
@@ -12,6 +17,7 @@ from hammurabi.grader.model import TestRunCompilationErrorResult
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunFormatErrorResult
 from hammurabi.grader.model import TestRunInternalErrorResult
+from hammurabi.grader.model import TestRunResult
 from hammurabi.grader.model import TestRunRuntimeErrorResult
 from hammurabi.grader.model import TestRunSolutionMissingResult
 from hammurabi.grader.model import TestRunTimeoutResult
@@ -19,19 +25,24 @@ from hammurabi.grader.model import TestRunUnverifiedResult
 from hammurabi.grader.model import TestRunWrongAnswerResult
 from hammurabi.utils import fileio
 
+if TYPE_CHECKING:
+    from hammurabi.grader.model import TestRun
+
 # Constants for CSV escaping
 ASCII_SPACE_ORD = 32
 ASCII_TILDE_ORD = 128
 MICROSECOND_SUFFIX_LEN = 3
 
 
-def pickle_testruns(testruns, filename):
+def pickle_testruns(testruns: list[TestRun], filename: str) -> None:
+    """Serialize test runs to a pickle file."""
     with open(filename, "wb") as pickle_file:
         pickle.dump(testruns, pickle_file)
 
 
-def generate_testrun_log_csv(testruns, filename):
-    testruns = sorted(testruns, key=lambda tr: tr.judge_start_time)
+def generate_testrun_log_csv(testruns: list[TestRun], filename: str) -> None:
+    """Generate a CSV log of all test runs."""
+    testruns = sorted(testruns, key=lambda tr: tr.judge_start_time or 0)
 
     with open(filename, "w") as csv_file:
         field_names = [
@@ -54,6 +65,7 @@ def generate_testrun_log_csv(testruns, filename):
         writer.writeheader()
 
         for testrun in testruns:
+            details = testrun.result.format_details() if testrun.result else ""
             writer.writerow(
                 {
                     "start_time": testrun.judge_start_time,
@@ -63,17 +75,18 @@ def generate_testrun_log_csv(testruns, filename):
                     "solution_language": testrun.solution.language,
                     "testcase_name": testrun.testcase.name,
                     "testcase_score": testrun.testcase.score,
-                    "result_status": testrun.result.status_code,
-                    "result_description": testrun.result.status,
-                    "score": testrun.result.score,
+                    "result_status": testrun.result.status_code if testrun.result else "",
+                    "result_description": testrun.result.status if testrun.result else "",
+                    "score": testrun.result.score if testrun.result else 0,
                     "solution_time": testrun.get_lean_elapsed_milliseconds(),
                     "overall_time": testrun.get_judge_elapsed_milliseconds(),
-                    "details": csv_escape_string(str(testrun.result.format_details()))[:1000],
+                    "details": csv_escape_string(str(details))[:1000],
                 }
             )
 
 
-def generate_full_log_html(testruns, filename):
+def generate_full_log_html(testruns: list[TestRun], filename: str) -> None:
+    """Generate a detailed HTML log of all test runs."""
     env = get_jinja_environment()
     report_name = "Solution Execution Log"
     report_date = time.time()
@@ -87,16 +100,17 @@ def generate_full_log_html(testruns, filename):
     fileio.write_entire_file(filename, content)
 
 
-def generate_matrix_report_html(testruns, filename):
+def generate_matrix_report_html(testruns: list[TestRun], filename: str) -> None:
+    """Generate a matrix-style HTML report."""
     env = get_jinja_environment()
     report_name = "Progress Matrix Report"
     report_date = time.time()
-    legend_results = [
+    legend_results: list[TestRunResult] = [
         TestRunCorrectAnswerResult(),
         TestRunWrongAnswerResult(),
         TestRunTimeoutResult(timeout=0),
         TestRunRuntimeErrorResult(message=None),
-        TestRunFormatErrorResult(message=None),
+        TestRunFormatErrorResult(message=""),
         TestRunCompilationErrorResult(message=None),
         TestRunSolutionMissingResult(),
         TestRunInternalErrorResult(exception_info=None),
@@ -112,7 +126,8 @@ def generate_matrix_report_html(testruns, filename):
     fileio.write_entire_file(filename, content)
 
 
-def generate_heatmap_report_html(testruns, filename):
+def generate_heatmap_report_html(testruns: list[TestRun], filename: str) -> None:
+    """Generate a time-based heatmap HTML report."""
     env = get_jinja_environment()
     for testrun in testruns:
         testrun.__dict__["data"] = {}
@@ -158,7 +173,8 @@ def generate_heatmap_report_html(testruns, filename):
     fileio.write_entire_file(filename, content)
 
 
-def get_jinja_environment():
+def get_jinja_environment() -> Environment:
+    """Create and configure the Jinja2 environment."""
     env = Environment()
     template_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "resources", "templates")
@@ -178,37 +194,44 @@ def get_jinja_environment():
     return env
 
 
-def csv_escape_string(string):
+def csv_escape_string(string: str) -> str:
+    """Escape non-printable characters for CSV output."""
     return "".join([i if ASCII_SPACE_ORD < ord(i) < ASCII_TILDE_ORD else " " for i in string])
 
 
-def format_timestamp(timestamp, format="%Y-%m-%d %H:%M:%S"):
+def format_timestamp(timestamp: float, format: str = "%Y-%m-%d %H:%M:%S") -> str:
+    """Format a Unix timestamp as a date string."""
     dt = datetime.datetime.fromtimestamp(timestamp)
     return dt.strftime(format)
 
 
-def format_timestamp_micro(timestamp):
+def format_timestamp_micro(timestamp: float) -> str | None:
+    """Format a millisecond timestamp with microsecond precision."""
     datestring = format_timestamp(timestamp / 1000.0, format="%Y-%m-%d %H:%M:%S.%f")
     if len(datestring) > MICROSECOND_SUFFIX_LEN and datestring[-MICROSECOND_SUFFIX_LEN:] == "000":
         return datestring[:-MICROSECOND_SUFFIX_LEN]
+    return None
 
 
-def dump_preformatted_text(content):
+def dump_preformatted_text(content: str | None) -> str | None:
+    """Truncate content if it's too long for display."""
     truncate_limit = 1024
     if content is not None and len(content.strip()) > 0 and len(content) > truncate_limit:
         content = content[:truncate_limit] + "[content too long, truncated]"
     return content
 
 
-def dump_file(filename):
+def dump_file(filename: str | None) -> str | None:
+    """Read and dump file contents, truncating if necessary."""
     content = None
     if filename is not None and os.path.exists(filename):
         content = fileio.read_entire_file(filename)
     return dump_preformatted_text(content)
 
 
-def get_contextual_style_by_result(testrun_result):
-    contextual_style_by_result = {
+def get_contextual_style_by_result(testrun_result: TestRunResult) -> str:
+    """Return the Bootstrap contextual style for a result type."""
+    contextual_style_by_result: dict[type[TestRunResult], str] = {
         TestRunCompilationErrorResult: "warning",
         TestRunCorrectAnswerResult: "success",
         TestRunFormatErrorResult: "warning",
@@ -223,12 +246,14 @@ def get_contextual_style_by_result(testrun_result):
     return contextual_style_by_result.get(result_type, "default")
 
 
-def is_correct_answer(testrun):
-    return testrun.result.is_correct()
+def is_correct_answer(testrun: TestRun) -> bool:
+    """Check if a test run has a correct answer."""
+    return testrun.result is not None and testrun.result.is_correct()
 
 
-def adjust_time_for_language(time, language):
-    bootstrap_allowances = {
+def adjust_time_for_language(time: int, language: str | None) -> float:
+    """Adjust execution time to account for language performance differences."""
+    bootstrap_allowances: dict[str, float] = {
         "c": 0.0,
         "cpp": 0.0,
         "csharp": 0,
@@ -239,7 +264,7 @@ def adjust_time_for_language(time, language):
         "ruby": 0,
         "scala": 100,
     }
-    runtime_slowness_factors = {
+    runtime_slowness_factors: dict[str, float] = {
         "c": 1.0,
         "cpp": 1.0,
         "csharp": 1.75,
@@ -252,16 +277,18 @@ def adjust_time_for_language(time, language):
     }
 
     slowness_factor_threshold = 50
-    result = (time - bootstrap_allowances.get(language, 0.0)) * 1.0
-    if time - bootstrap_allowances.get(language, 0.0) > slowness_factor_threshold:
+    lang = language or ""
+    result = (time - bootstrap_allowances.get(lang, 0.0)) * 1.0
+    if time - bootstrap_allowances.get(lang, 0.0) > slowness_factor_threshold:
         result = slowness_factor_threshold + (
             time - slowness_factor_threshold
-        ) * 1.0 / runtime_slowness_factors.get(language, 1.0)
+        ) * 1.0 / runtime_slowness_factors.get(lang, 1.0)
 
     return result
 
 
-def percentile(data, value):
+def percentile(data: list[float], value: float) -> float:
+    """Calculate the percentile rank of a value in a sorted list."""
     if len(data) <= 1:
         return 0.0
 
@@ -269,7 +296,8 @@ def percentile(data, value):
     return nearest_value_index * 1.0 / (len(data) - 1)
 
 
-def summary_statistics(data):
+def summary_statistics(data: list[float]) -> tuple[float | None, float | None]:
+    """Calculate mean and standard deviation."""
     try:
         mean = sum(data) * 1.0 / len(data)
         variance = sum([(value - mean) ** 2 for value in data]) / len(data)
@@ -279,6 +307,7 @@ def summary_statistics(data):
         return None, None
 
 
-def heat_color_for_percentile(percentile):
+def heat_color_for_percentile(percentile: float) -> str:
+    """Convert a percentile to a heat map color."""
     (r, g, b) = colorsys.hsv_to_rgb(0.3 * (1.0 - percentile) + 0.048, 0.2, 0.95)
     return f"#{int(r * 255):02x}{int(g * 255):02x}{int(b * 255):02x}"

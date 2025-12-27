@@ -1,8 +1,10 @@
+"""Product information and banner display utilities."""
+
 from hammurabi.utils import laws
 
-version = (0, 3, 2)
+version: tuple[int, int, int] = (0, 4, 0)
 
-banner = [
+banner: list[str] = [
     r"       ,,--,,     ",
     r"      /______\    ",
     r"     /()_()_()\   ",
@@ -21,15 +23,17 @@ banner = [
     r"      \||||||/    ",
 ]
 
-_terminal_width = 80
+_terminal_width: int = 80
 
 
-def get_version_string():
+def get_version_string() -> str:
+    """Return the version as a formatted string."""
     major, minor, patch = version
     return f"{major:d}.{minor:d}.{patch:d}"
 
 
-def get_banner():
+def get_banner() -> list[str]:
+    """Generate the application banner with version and a random law."""
     header_line_index = 2
     law_line_index = 4
 
@@ -50,20 +54,23 @@ def get_banner():
     return banner
 
 
-def print_banner():
-    banner = get_banner()
-    for line in banner:
+def print_banner() -> None:
+    """Print the application banner to stdout."""
+    banner_lines = get_banner()
+    for line in banner_lines:
         print(line)
 
 
-def _expand_banner_line(line, expansion_text):
+def _expand_banner_line(line: str, expansion_text: str) -> str:
+    """Add expansion text to the right side of a banner line."""
     spare_width = _terminal_width - len(line) - len(expansion_text)
     spacer = " " * (spare_width // 2)
     return f"{line}{spacer}{expansion_text}{spacer}"
 
 
-def _wrap_string(string, width):
-    wrapped_lines = [""]
+def _wrap_string(string: str, width: int) -> list[str]:
+    """Wrap a string to fit within a given width."""
+    wrapped_lines: list[str] = [""]
     words = string.split()
 
     for word in words:

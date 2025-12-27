@@ -1,10 +1,18 @@
+"""Language-specific solution adapters."""
+
+from __future__ import annotations
+
 import importlib
 import inspect
 import pkgutil
 import sys
+from typing import TYPE_CHECKING
 
-# Load all modules from current directory.
-__all__ = []
+if TYPE_CHECKING:
+    from hammurabi.grader.adapters.base import BaseSolutionAdapter
+
+# Load all modules from the current directory.
+__all__: list[str] = []
 
 for _loader, module_name, _is_pkg in pkgutil.walk_packages(__path__):
     module = importlib.import_module("." + module_name, __name__)
@@ -20,7 +28,7 @@ for _loader, module_name, _is_pkg in pkgutil.walk_packages(__path__):
 # Create adapter registry.
 # BaseSolutionAdapter is loaded dynamically above, so we get it from globals
 _base_adapter = globals().get("BaseSolutionAdapter")
-registered_adapters = {
+registered_adapters: dict[str, type[BaseSolutionAdapter]] = {
     cls(None).get_language_name(): cls
     for name, cls in inspect.getmembers(sys.modules[__name__])
     if isinstance(cls, type)

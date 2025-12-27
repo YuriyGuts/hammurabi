@@ -1,7 +1,9 @@
 # ruff: noqa: E501
+"""The Code of Hammurabi - ancient Babylonian law collection."""
+
 import random
 
-laws = [
+laws: list[str] = [
     "1. If any one ensnare another, putting a ban upon him, but he can not prove it, then he that ensnared him shall be put to death.",
     "2. If any one bring an accusation against a man, and the accused go to the river and leap into the river, if he sink in the river his accuser shall take possession of his house. But if the river prove that the accused is not guilty, and he escape unhurt, then he who had brought the accusation shall be put to death, while he who leaped into the river shall take possession of the house that had belonged to his accuser.",
     "3. If any one bring an accusation of any crime before the elders, and does not prove what he has charged, he shall, if it be a capital offense charged, be put to death.",
@@ -249,6 +251,7 @@ laws = [
 ]
 
 
-def get_random_law():
+def get_random_law() -> str:
+    """Return a random law from the Code of Hammurabi."""
     random_law = random.choice(laws)
     return random_law
