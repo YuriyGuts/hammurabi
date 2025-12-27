@@ -3,14 +3,11 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
 
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
+from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestRun
 from hammurabi.utils import fileio
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import Solution
-    from hammurabi.grader.model import TestRun
 
 
 class JavaSolutionAdapter(BaseSolutionAdapter):
@@ -36,6 +33,9 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         entry_point_file = self.get_entry_point_file()
+        if entry_point_file is None:
+            return ["java", ""]
+
         package_name = fileio.grep_value_from_file(
             entry_point_file, r"package\s+([^\s;]+);", group_num=1
         )

@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import subprocess
-from typing import TYPE_CHECKING
 
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import Solution
-    from hammurabi.grader.model import TestRun
+from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestRun
 
 
 class PythonSolutionAdapter(BaseSolutionAdapter):

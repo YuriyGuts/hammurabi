@@ -37,12 +37,12 @@ import itertools
 import os
 
 from hammurabi.grader import adapters
+from hammurabi.grader.config import GraderConfig
+from hammurabi.grader.config import ProblemConfig
 from hammurabi.grader.model import Problem
 from hammurabi.grader.model import Solution
 from hammurabi.grader.model import TestCase
 from hammurabi.utils import confreader
-from hammurabi.utils.config import GraderConfig
-from hammurabi.utils.config import ProblemConfig
 
 # Reshape {language: [ext, ext, ...]} to {ext: [language, language, ...]}.
 extension_to_language_map: dict[str, list[str]] = {

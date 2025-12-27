@@ -4,9 +4,9 @@ import json
 
 import pytest
 
+from hammurabi.grader.config import GraderConfig
+from hammurabi.grader.config import ProblemConfig
 from hammurabi.utils import confreader
-from hammurabi.utils.config import GraderConfig
-from hammurabi.utils.config import ProblemConfig
 
 sample_grader_config = """
 {

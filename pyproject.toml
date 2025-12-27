@@ -12,6 +12,13 @@ dependencies = [
     "requests>=2.25",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.0.280",
+    "ty>=0.0.7",
+]
+
 [project.scripts]
 hammurabi = "hammurabi:main"
 
@@ -30,15 +37,6 @@ python-version = "3.10"
 
 [tool.ty.src]
 include = ["hammurabi"]
-
-[tool.ty.rules]
-# Disable warnings for dynamic code patterns in tests and optional values
-possibly-missing-attribute = "ignore"
-possibly-unresolved-reference = "ignore"
-no-matching-overload = "ignore"
-invalid-argument-type = "ignore"
-unresolved-attribute = "ignore"
-unsupported-operator = "ignore"
 
 [tool.ruff]
 line-length = 100
@@ -73,14 +71,4 @@ single-line-exclusions = []
     "D",         # Allow tests without docstrings
     "INP001",    # Allow tests without __init__.py
     "PLR2004",   # Allow magic numbers in tests
-]
-"hammurabi/grader/model.py" = [
-    "PLR0913",   # Allow many arguments in data model __init__ methods
-]
-
-[dependency-groups]
-dev = [
-    "pytest>=7.0",
-    "ruff>=0.0.280",
-    "ty>=0.0.7",
 ]

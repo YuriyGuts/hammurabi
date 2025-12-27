@@ -2,37 +2,40 @@
 
 from __future__ import annotations
 
-import importlib
-import inspect
-import pkgutil
-import sys
-from typing import TYPE_CHECKING
+from hammurabi.grader.adapters.base import BaseSolutionAdapter
+from hammurabi.grader.adapters.c import CSolutionAdapter
+from hammurabi.grader.adapters.cpp import CppSolutionAdapter
+from hammurabi.grader.adapters.csharp import CSharpSolutionAdapter
+from hammurabi.grader.adapters.java import JavaSolutionAdapter
+from hammurabi.grader.adapters.javascript import JavaScriptSolutionAdapter
+from hammurabi.grader.adapters.python import PythonSolutionAdapter
+from hammurabi.grader.adapters.ruby import RubySolutionAdapter
 
-if TYPE_CHECKING:
-    from hammurabi.grader.adapters.base import BaseSolutionAdapter
+__all__ = [
+    "BaseSolutionAdapter",
+    "CSolutionAdapter",
+    "CppSolutionAdapter",
+    "CSharpSolutionAdapter",
+    "JavaSolutionAdapter",
+    "JavaScriptSolutionAdapter",
+    "PythonSolutionAdapter",
+    "RubySolutionAdapter",
+    "registered_adapters",
+]
 
-# Load all modules from the current directory.
-__all__: list[str] = []
+# Registry mapping language names to adapter classes
+_adapters = [
+    CSolutionAdapter,
+    CppSolutionAdapter,
+    CSharpSolutionAdapter,
+    JavaSolutionAdapter,
+    JavaScriptSolutionAdapter,
+    PythonSolutionAdapter,
+    RubySolutionAdapter,
+]
 
-for _loader, module_name, _is_pkg in pkgutil.walk_packages(__path__):
-    module = importlib.import_module("." + module_name, __name__)
-
-    for name, value in inspect.getmembers(module):
-        if name.startswith("__"):
-            continue
-
-        globals()[name] = value
-        __all__ += [name]  # noqa: PLE0604 - name is always a string from inspect.getmembers
-
-
-# Create adapter registry.
-# BaseSolutionAdapter is loaded dynamically above, so we get it from globals
-_base_adapter = globals().get("BaseSolutionAdapter")
 registered_adapters: dict[str, type[BaseSolutionAdapter]] = {
-    cls(None).get_language_name(): cls
-    for name, cls in inspect.getmembers(sys.modules[__name__])
-    if isinstance(cls, type)
-    and _base_adapter
-    and issubclass(cls, _base_adapter)
-    and cls != _base_adapter
+    name: adapter
+    for adapter in _adapters
+    if (name := adapter(None).get_language_name()) is not None
 }

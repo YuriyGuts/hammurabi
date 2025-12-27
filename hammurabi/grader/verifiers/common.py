@@ -4,15 +4,12 @@ from __future__ import annotations
 
 import filecmp
 import sys
-from typing import TYPE_CHECKING
 from typing import Any
 
+from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunFormatErrorResult
 from hammurabi.grader.model import TestRunWrongAnswerResult
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import TestRun
 
 
 class AnswerVerifier:
@@ -23,6 +20,7 @@ class AnswerVerifier:
 
     def verify(self, testrun: TestRun) -> bool:
         """Verify the answer using strict byte-by-byte comparison."""
+        assert testrun.answer_filename is not None
         return filecmp.cmp(
             testrun.answer_filename, testrun.testcase.correct_answer_filename, shallow=False
         )
@@ -40,9 +38,10 @@ class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):
 
     def verify(self, testrun: TestRun) -> bool:
         """Verify by comparing space-separated tokens line by line."""
+        assert testrun.answer_filename is not None
         with (
-            open(testrun.answer_filename) as given_answer_file,
-            open(testrun.testcase.correct_answer_filename) as correct_answer_file,
+            open(testrun.answer_filename, encoding="utf-8") as given_answer_file,
+            open(testrun.testcase.correct_answer_filename, encoding="utf-8") as correct_answer_file,
         ):
             # Matching the files line-by-line.
             for correct_line in correct_answer_file.readlines():

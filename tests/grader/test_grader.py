@@ -7,9 +7,10 @@ import subprocess
 import pytest
 
 
-def get_hammurabi_environment(tmpdir, template_problem_dir):
-    source_problem_dir = os.path.join(
-        os.path.abspath(os.path.dirname(__file__)), template_problem_dir
+def generate_hammurabi_environment(tmpdir, template_problem_dir):
+    # Go up one level from tests/grader to tests/ to find test problem directories
+    source_problem_dir = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), template_problem_dir)
     )
     target_problem_dir = os.path.join(tmpdir.strpath, "problems")
     shutil.copytree(source_problem_dir, target_problem_dir)
@@ -40,22 +41,21 @@ def get_hammurabi_environment(tmpdir, template_problem_dir):
 
 
 @pytest.fixture
-def grader_language_tools_test_environment(tmpdir):
-    return get_hammurabi_environment(tmpdir, "grader_language_tools_test_problems")
+def grader_language_test_environment(tmpdir):
+    return generate_hammurabi_environment(tmpdir, "fixtures/problems_for_language_tests")
 
 
 @pytest.fixture
 def grader_verification_test_environment(tmpdir):
-    return get_hammurabi_environment(tmpdir, "grader_verification_test_problems")
+    return generate_hammurabi_environment(tmpdir, "fixtures/problems_for_verification_tests")
 
 
-def test_all_languages_given_correct_solutions_pass_all_testcases(
-    grader_language_tools_test_environment,
-):
+def test_all_languages_given_correct_solutions_pass_all_testcases(grader_language_test_environment):
     # Arrange
-    config_file_path, problem_dir_path, report_dir_path = grader_language_tools_test_environment
+    config_file_path, problem_dir_path, report_dir_path = grader_language_test_environment
+    # Go up from tests/grader/ to project root to find hammurabi.py
     hammurabi_entry_point = os.path.abspath(
-        os.path.join(__file__, os.pardir, os.pardir, "hammurabi.py")
+        os.path.join(__file__, os.pardir, os.pardir, os.pardir, "hammurabi.py")
     )
 
     # Act
@@ -98,8 +98,9 @@ def test_all_languages_given_faulty_solutions_report_proper_errors(
 ):
     # Arrange
     config_file_path, problem_dir_path, report_dir_path = grader_verification_test_environment
+    # Go up from tests/grader/ to project root to find hammurabi.py
     hammurabi_entry_point = os.path.abspath(
-        os.path.join(__file__, os.pardir, os.pardir, "hammurabi.py")
+        os.path.join(__file__, os.pardir, os.pardir, os.pardir, "hammurabi.py")
     )
 
     # Act

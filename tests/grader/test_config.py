@@ -4,15 +4,15 @@ import json
 import tempfile
 from pathlib import Path
 
-from hammurabi.utils.config import GraderConfig
-from hammurabi.utils.config import LimitsConfig
-from hammurabi.utils.config import LocationsConfig
-from hammurabi.utils.config import ProblemConfig
-from hammurabi.utils.config import ReportingConfig
-from hammurabi.utils.config import RunnerConfig
-from hammurabi.utils.config import SecurityConfig
-from hammurabi.utils.config import TimeLimitsConfig
-from hammurabi.utils.config import _deep_merge
+from hammurabi.grader.config import GraderConfig
+from hammurabi.grader.config import LimitsConfig
+from hammurabi.grader.config import LocationsConfig
+from hammurabi.grader.config import ProblemConfig
+from hammurabi.grader.config import ReportingConfig
+from hammurabi.grader.config import RunnerConfig
+from hammurabi.grader.config import SecurityConfig
+from hammurabi.grader.config import TimeLimitsConfig
+from hammurabi.grader.config import _deep_merge
 
 
 class TestTimeLimitsConfig:

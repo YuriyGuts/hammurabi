@@ -8,11 +8,11 @@ import datetime
 import os
 import pickle
 import time
-from typing import TYPE_CHECKING
 
 from jinja2 import FileSystemLoader
 from jinja2.environment import Environment
 
+from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunCompilationErrorResult
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunFormatErrorResult
@@ -24,9 +24,6 @@ from hammurabi.grader.model import TestRunTimeoutResult
 from hammurabi.grader.model import TestRunUnverifiedResult
 from hammurabi.grader.model import TestRunWrongAnswerResult
 from hammurabi.utils import fileio
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import TestRun
 
 # Constants for CSV escaping
 ASCII_SPACE_ORD = 32

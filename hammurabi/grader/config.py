@@ -141,7 +141,7 @@ class ProblemConfig(BaseModel):
 
     @classmethod
     def from_file(cls, path: str | Path) -> ProblemConfig:
-        """Load problem configuration from a JSON file."""
+        """Load the problem configuration from a JSON file."""
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
         return cls.model_validate(data)

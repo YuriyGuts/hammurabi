@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from hammurabi.utils.config import GraderConfig
-from hammurabi.utils.config import ProblemConfig
+from hammurabi.grader.config import GraderConfig
+from hammurabi.grader.config import ProblemConfig
 
 
 def read_grader_config(config_filename: str | Path) -> GraderConfig:

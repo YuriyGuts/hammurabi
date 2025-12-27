@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import os
 import platform
 import subprocess
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import Solution
-    from hammurabi.grader.model import TestRun
+from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestRun
 
 
 class CSolutionAdapter(BaseSolutionAdapter):
@@ -54,8 +51,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
 
     def _get_executable_filename(self, testrun: TestRun) -> str:
         if platform.system() == "Windows":
-            return os.path.abspath(
-                os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".exe")
-            )
+            assert testrun.solution.root_dir is not None
+            return str(Path(testrun.solution.root_dir) / f"{testrun.solution.problem.name}.exe")
         else:
             return testrun.solution.problem.name

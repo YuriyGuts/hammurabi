@@ -1,5 +1,5 @@
-# ruff: noqa: E501
 """The Code of Hammurabi - ancient Babylonian law collection."""
+# ruff: noqa: E501 - Do not wrap long lines
 
 import random
 

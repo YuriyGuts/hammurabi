@@ -1,18 +1,30 @@
 """Answer verifiers for checking solution output."""
 
-import importlib
-import inspect
-import pkgutil
+from __future__ import annotations
 
-# Load all modules from the current directory.
-__all__: list[str] = []
+from hammurabi.grader.verifiers.common import AnswerVerifier
+from hammurabi.grader.verifiers.common import FloatSequenceVerifier
+from hammurabi.grader.verifiers.common import IntegerSequenceVerifier
+from hammurabi.grader.verifiers.common import SpaceCharacterSeparatedSequenceVerifier
+from hammurabi.grader.verifiers.common import WordSequenceVerifier
+from hammurabi.grader.verifiers.custom import MyCustomVerifier
 
-for _loader, module_name, _is_pkg in pkgutil.walk_packages(__path__):
-    module = importlib.import_module("." + module_name, __name__)
+__all__ = [
+    "AnswerVerifier",
+    "FloatSequenceVerifier",
+    "IntegerSequenceVerifier",
+    "SpaceCharacterSeparatedSequenceVerifier",
+    "WordSequenceVerifier",
+    "MyCustomVerifier",
+    "registered_verifiers",
+]
 
-    for name, value in inspect.getmembers(module):
-        if name.startswith("__"):
-            continue
-
-        globals()[name] = value
-        __all__ += [name]  # noqa: PLE0604 - name is always a string from inspect.getmembers
+# Registry mapping verifier names to classes
+registered_verifiers: dict[str, type[AnswerVerifier]] = {
+    "AnswerVerifier": AnswerVerifier,
+    "FloatSequenceVerifier": FloatSequenceVerifier,
+    "IntegerSequenceVerifier": IntegerSequenceVerifier,
+    "SpaceCharacterSeparatedSequenceVerifier": SpaceCharacterSeparatedSequenceVerifier,
+    "WordSequenceVerifier": WordSequenceVerifier,
+    "MyCustomVerifier": MyCustomVerifier,
+}

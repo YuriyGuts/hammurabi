@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import os
 import subprocess
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import Solution
-    from hammurabi.grader.model import TestRun
+from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestRun
 
 
 class CSharpSolutionAdapter(BaseSolutionAdapter):
@@ -32,8 +29,9 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
     def get_compile_command_line(self, testrun: TestRun) -> str:
         # Create a temporary .csproj file for dotnet build
         project_name = testrun.solution.problem.name
-        project_dir = testrun.solution.root_dir
-        csproj_path = os.path.join(project_dir, f"{project_name}.csproj")
+        assert testrun.solution.root_dir is not None
+        project_dir = Path(testrun.solution.root_dir)
+        csproj_path = project_dir / f"{project_name}.csproj"
 
         # Detect available .NET version
         try:
@@ -52,7 +50,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         # Generate minimal .csproj content
         compile_includes = "\n".join(
             [
-                f'    <Compile Include="{os.path.basename(file)}" />'
+                f'    <Compile Include="{Path(file).name}" />'
                 for file in self.get_source_files()
             ]
         )
@@ -69,7 +67,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
 </Project>"""
 
         # Write the .csproj file
-        with open(csproj_path, "w") as f:
+        with open(csproj_path, "w", encoding="utf-8") as f:
             f.write(csproj_content)
 
         # Return the build command
@@ -77,11 +75,12 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         project_name = testrun.solution.problem.name
-        dll_filename = os.path.join(testrun.solution.root_dir, f"{project_name}.dll")
-        return ["dotnet", dll_filename]
+        assert testrun.solution.root_dir is not None
+        dll_filename = Path(testrun.solution.root_dir) / f"{project_name}.dll"
+        return ["dotnet", str(dll_filename)]
 
     def _get_executable_filename(self, testrun: TestRun) -> str:
         # For compatibility, though we now use DLLs
-        return os.path.abspath(
-            os.path.join(testrun.solution.root_dir, testrun.solution.problem.name + ".dll")
-        )
+        assert testrun.solution.root_dir is not None
+        dll_path = Path(testrun.solution.root_dir) / f"{testrun.solution.problem.name}.dll"
+        return str(dll_path.resolve())

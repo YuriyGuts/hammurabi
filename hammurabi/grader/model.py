@@ -1,18 +1,22 @@
 """Data models for the grader."""
+# ruff: noqa: PLR0913 - Allow many arguments for model classes
 
 from __future__ import annotations
 
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 from typing import Any
 
-if TYPE_CHECKING:
-    from hammurabi.utils.config import ProblemConfig
+from hammurabi.grader.config import ProblemConfig
 
 
 class Problem:
     """A programming problem to be graded."""
+
+    # Type annotations for attributes set after init
+    config: ProblemConfig
+    input_filename: str
+    output_filename: str
 
     def __init__(
         self,
@@ -27,12 +31,15 @@ class Problem:
     ) -> None:
         self.name = name
         self.root_dir = root_dir
-        self.input_filename = input_filename
-        self.output_filename = output_filename
+        if input_filename is not None:
+            self.input_filename = input_filename
+        if output_filename is not None:
+            self.output_filename = output_filename
         self.solutions = solutions if solutions is not None else []
         self.testcases = testcases if testcases is not None else []
         self.reference_solution = reference_solution
-        self.config = config
+        if config is not None:
+            self.config = config
 
     def __str__(self) -> str:
         return f"Problem: {self.name}"
@@ -67,8 +74,7 @@ class Solution:
 
     def get_files_by_predicate(self, predicate: Callable[[str], bool]) -> list[str]:
         """Return all files matching the predicate."""
-        matches = [file for file in self.files if predicate(file)]
-        return matches
+        return [file for file in self.files if predicate(file)]
 
 
 class TestCase:

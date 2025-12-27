@@ -2,14 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
+from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunWrongAnswerResult
 from hammurabi.grader.verifiers.common import AnswerVerifier
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import TestRun
 
 
 class MyCustomVerifier(AnswerVerifier):
@@ -20,10 +16,17 @@ class MyCustomVerifier(AnswerVerifier):
 
     def verify(self, testrun: TestRun) -> bool:
         """Verify the answer with custom logic."""
-        with open(testrun.answer_filename), open(testrun.testcase.correct_answer_filename):
+        assert testrun.answer_filename is not None
+        with (
+            open(testrun.answer_filename, encoding="utf-8") as given_answer_file,
+            open(testrun.testcase.correct_answer_filename, encoding="utf-8") as correct_answer_file,
+        ):
             # ...
             # Read and compare stuff here.
             # ...
+            _ = given_answer_file.read()
+            _ = correct_answer_file.read()
+
             something_wrong = True
 
             if something_wrong:

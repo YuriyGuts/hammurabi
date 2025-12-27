@@ -5,17 +5,14 @@ from __future__ import annotations
 import contextlib
 import subprocess
 import threading
-from typing import TYPE_CHECKING
 
 import psutil
 
+from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunTimeoutResult
 from hammurabi.grader.runners.base import BaseSolutionRunner
 from hammurabi.utils.exceptions import SubprocessTimeoutError
 from hammurabi.utils.exceptions import TestRunPrematureTerminationError
-
-if TYPE_CHECKING:
-    from hammurabi.grader.model import TestRun
 
 
 class SubprocessSolutionRunner(BaseSolutionRunner):
@@ -74,9 +71,11 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
                 do_kill_process(child_process)
             do_kill_process(process)
 
+        assert testrun.stdout_filename is not None
+        assert testrun.stderr_filename is not None
         with (
-            open(testrun.stdout_filename, "w") as stdout,
-            open(testrun.stderr_filename, "w") as stderr,
+            open(testrun.stdout_filename, "w", encoding="utf-8") as stdout,
+            open(testrun.stderr_filename, "w", encoding="utf-8") as stderr,
         ):
             testrun.record_lean_start_time()
             proc = subprocess.Popen(

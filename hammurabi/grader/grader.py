@@ -4,33 +4,29 @@ from __future__ import annotations
 
 import argparse
 import datetime
-import glob
-import os
 import shutil
 import socket
 import traceback
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from hammurabi.grader import adapters
 from hammurabi.grader import discovery
 from hammurabi.grader import reporting
+from hammurabi.grader import verifiers
+from hammurabi.grader.adapters.base import BaseSolutionAdapter
+from hammurabi.grader.config import GraderConfig
 from hammurabi.grader.model import GraderJobScope
+from hammurabi.grader.model import Problem
 from hammurabi.grader.model import Solution
+from hammurabi.grader.model import TestCase
 from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunInternalErrorResult
 from hammurabi.grader.model import TestRunSolutionMissingResult
 from hammurabi.grader.model import TestRunUnverifiedResult
-from hammurabi.grader.verifiers import *  # noqa: F403  # Dynamic plugin lookup via globals()
+from hammurabi.grader.verifiers.common import AnswerVerifier
 from hammurabi.utils import confreader
-from hammurabi.utils.config import GraderConfig
 from hammurabi.utils.exceptions import TestRunPrematureTerminationError
 from hammurabi.utils.exceptions import VerifierCreationError
-
-if TYPE_CHECKING:
-    from hammurabi.grader.adapters.base import BaseSolutionAdapter
-    from hammurabi.grader.model import Problem
-    from hammurabi.grader.model import TestCase
-    from hammurabi.grader.verifiers.common import AnswerVerifier
 
 
 def grade(args: argparse.Namespace) -> None:
@@ -71,17 +67,17 @@ def grade(args: argparse.Namespace) -> None:
 def read_config(args: argparse.Namespace) -> GraderConfig:
     """Read and return the grader configuration."""
     if args.conf is not None:
-        config_file = os.path.abspath(args.conf)
+        config_file = Path(args.conf).resolve()
     else:
-        config_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "conf"))
-        config_file = os.path.join(config_dir, "grader.conf")
+        config_dir = Path(__file__).parent.parent / "conf"
+        config_file = config_dir / "grader.conf"
 
-    if not os.path.exists(config_file):
+    if not config_file.exists():
         raise OSError(
             f"Configuration file '{config_file}' not found. "
             "Please create one or copy it from grader.conf.template."
         )
-    return confreader.read_grader_config(config_file)
+    return confreader.read_grader_config(str(config_file))
 
 
 def get_scope(problems: list[Problem], args: argparse.Namespace) -> GraderJobScope:
@@ -130,22 +126,18 @@ def apply_locations_to_config(config: GraderConfig) -> None:
 
 def get_problem_root_dir(config: GraderConfig) -> str:
     """Get the root directory for problems."""
-    problem_root_dir = config.locations.problem_root
-    if not os.path.isabs(problem_root_dir):
-        problem_root_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), os.pardir, problem_root_dir)
-        )
-    return problem_root_dir
+    problem_root_path = Path(config.locations.problem_root)
+    if not problem_root_path.is_absolute():
+        problem_root_path = (Path(__file__).parent.parent / problem_root_path).resolve()
+    return str(problem_root_path)
 
 
 def get_report_root_dir(config: GraderConfig) -> str:
     """Get the root directory for reports."""
-    report_root_dir = config.locations.report_root
-    if not os.path.isabs(report_root_dir):
-        report_root_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), os.pardir, report_root_dir)
-        )
-    return report_root_dir
+    report_root_path = Path(config.locations.report_root)
+    if not report_root_path.is_absolute():
+        report_root_path = (Path(__file__).parent.parent / report_root_path).resolve()
+    return str(report_root_path)
 
 
 def get_report_output_dir(config: GraderConfig) -> str:
@@ -154,11 +146,11 @@ def get_report_output_dir(config: GraderConfig) -> str:
     hostname = socket.getfqdn()
     template = config.locations.report_folder_template
     report_output_dir_name = template.format(dt=dt, hostname=hostname)
-    report_output_dir = os.path.join(config.report_root_dir, report_output_dir_name)
-    if os.path.exists(report_output_dir):
-        shutil.rmtree(report_output_dir, ignore_errors=True)
-    os.makedirs(report_output_dir)
-    return report_output_dir
+    report_output_path = Path(config.report_root_dir) / report_output_dir_name
+    if report_output_path.exists():
+        shutil.rmtree(report_output_path, ignore_errors=True)
+    report_output_path.mkdir(parents=True)
+    return str(report_output_path)
 
 
 def judge_solution(solution: Solution, testcases: list[TestCase]) -> list[TestRun]:
@@ -234,18 +226,22 @@ def judge_testcase(solution: Solution, testcase: TestCase, adapter: BaseSolution
 
 def create_adapter(solution: Solution) -> BaseSolutionAdapter:
     """Create the appropriate adapter for a solution's language."""
+    if solution.language is None:
+        return adapters.BaseSolutionAdapter(solution)
     cls = adapters.registered_adapters.get(solution.language, adapters.BaseSolutionAdapter)
     return cls(solution)
 
 
 def create_verifier(testrun: TestRun) -> AnswerVerifier:
     """Create a verifier for the test run."""
-    verifier_class = testrun.solution.problem.config.verifier
-    try:
-        verifier = globals()[verifier_class]
-        return verifier()
-    except Exception as e:
-        raise VerifierCreationError(f"Cannot create verifier '{verifier_class}'") from e
+    verifier_name = testrun.solution.problem.config.verifier
+    verifier_class = verifiers.registered_verifiers.get(verifier_name)
+    if verifier_class is None:
+        raise VerifierCreationError(
+            f"Unknown verifier '{verifier_name}'. "
+            f"Available: {', '.join(verifiers.registered_verifiers.keys())}"
+        )
+    return verifier_class()
 
 
 def fill_testruns_for_missing_solutions(testruns: list[TestRun]) -> list[TestRun]:
@@ -291,9 +287,10 @@ def fill_testruns_for_missing_solutions(testruns: list[TestRun]) -> list[TestRun
 
 def generate_reports(config: GraderConfig, testruns: list[TestRun]) -> None:
     """Generate all report files."""
+    report_output_path = Path(config.report_output_dir)
 
     def get_report_path(relative_name: str) -> str:
-        return os.path.abspath(os.path.join(config.report_output_dir, relative_name))
+        return str((report_output_path / relative_name).resolve())
 
     # Prepare paths.
     pickle_location = get_report_path("testruns.pickle")
@@ -310,10 +307,9 @@ def generate_reports(config: GraderConfig, testruns: list[TestRun]) -> None:
     reporting.generate_heatmap_report_html(testruns, heatmap_html_report_location)
 
     # Copy the stylesheets used by the reports.
-    for css in glob.glob(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "resources", "styles", "*.css"))
-    ):
-        shutil.copy(css, config.report_output_dir)
+    styles_dir = Path(__file__).parent / "resources" / "styles"
+    for css in styles_dir.glob("*.css"):
+        shutil.copy(css, report_output_path)
 
     print()
     print("Reports:")
