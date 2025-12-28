@@ -1,8 +1,10 @@
-#!/usr/bin/env python
+"""Command-line interface for the Hammurabi grader."""
+
+from __future__ import annotations
 
 import argparse
-import os
 import sys
+from pathlib import Path
 
 from hammurabi.grader import adapters
 from hammurabi.grader import grader
@@ -10,28 +12,47 @@ from hammurabi.utils import product
 
 ERROR_INVALID_ARGS = 1
 
+# For printing expected/actual answers in problems involving long arithmetics.
+sys.set_int_max_str_digits(100000)
 
-def main():
-    bootstrap()
-    args = parse_command_line_args(sys.argv)
-    print_banner()
+
+def main() -> int | None:
+    """
+    Entry point for the Hammurabi CLI.
+
+    Returns
+    -------
+    int | None
+        Exit code, or None if successful.
+    """
+    args = _parse_command_line_args(sys.argv)
+    _print_banner()
 
     if args.command == "grade":
-        return run_grader(args)
+        return _run_grader(args)
 
     if args.command == "languages":
-        return describe_languages(args)
+        return _describe_languages()
+
+    return None
 
 
-def bootstrap():
-    # In scope of this process, add self to PYTHONPATH for the imports to work properly.
-    current_dir = os.path.abspath(os.path.dirname(__file__))
-    sys.path.append(current_dir)
+def _parse_command_line_args(args: list[str]) -> argparse.Namespace:
+    """
+    Parse command-line arguments.
 
+    Parameters
+    ----------
+    args
+        Command-line arguments (typically sys.argv).
 
-def parse_command_line_args(args):
+    Returns
+    -------
+    argparse.Namespace
+        Parsed arguments.
+    """
     top_level_parser = argparse.ArgumentParser(
-        usage=f"{os.path.basename(args[0])} [COMMAND] [OPTIONS]"
+        usage=f"{Path(args[0]).name} [COMMAND] [OPTIONS]"
     )
     subparsers = top_level_parser.add_subparsers(
         title="Available commands", metavar="COMMAND", dest="command"
@@ -90,8 +111,7 @@ def parse_command_line_args(args):
     ).replace("usage: ", "")
 
     try:
-        command_line_args = top_level_parser.parse_args()
-        return command_line_args
+        return top_level_parser.parse_args()
     except Exception:
         subparser_descriptions = [
             (grade_command, grade_command_description, grade_command_parser),
@@ -99,32 +119,45 @@ def parse_command_line_args(args):
         ]
 
         for command, description, parser in subparser_descriptions:
-            print("")
+            print()
             print("-" * 30, "COMMAND:", command, "-" * 30)
             print(description)
-            print("")
+            print()
             parser.print_help()
 
         sys.exit(ERROR_INVALID_ARGS)
 
 
-def print_banner():
+def _print_banner() -> None:
+    """Print the product banner."""
     product.print_banner()
 
 
-def run_grader(args):
-    return grader.grade(args)
+def _run_grader(args: argparse.Namespace) -> None:
+    """
+    Run the grading process.
+
+    Parameters
+    ----------
+    args
+        Parsed command-line arguments.
+    """
+    grader.grade(args)
 
 
-def describe_languages(args):
-    registered_adapters = sorted(adapters.registered_adapters.items(), key=lambda tuple: tuple[0])
-    for language, adapter in registered_adapters:
+def _describe_languages() -> int:
+    """
+    Print information about configured language adapters.
+
+    Returns
+    -------
+    int
+        Exit code (always 0).
+    """
+    registered = sorted(adapters.registered_adapters.items(), key=lambda item: item[0])
+    for language, adapter in registered:
         print()
         print(f"--- {language} [{adapter.__name__}] ---")
         adapter.describe()
 
     return 0
-
-
-if __name__ == "__main__":
-    main()

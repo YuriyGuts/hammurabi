@@ -50,14 +50,10 @@ def grader_verification_test_environment(tmpdir):
 
 def test_all_languages_given_correct_solutions_pass_all_testcases(grader_language_test_environment):
     # Arrange
-    config_file_path, problem_dir_path, report_dir_path = grader_language_test_environment
-    # Go up from tests/grader/ to project root to find hammurabi.py
-    hammurabi_entry_point = os.path.abspath(
-        os.path.join(__file__, os.pardir, os.pardir, os.pardir, "hammurabi.py")
-    )
+    config_file_path, _problem_dir_path, report_dir_path = grader_language_test_environment
 
     # Act
-    grader_cmd = f'python "{hammurabi_entry_point}" grade --conf "{config_file_path}"'
+    grader_cmd = f'python -m hammurabi grade --conf "{config_file_path}"'
     exitcode = subprocess.call(grader_cmd, shell=True)
 
     # Assert
@@ -95,14 +91,10 @@ def test_all_languages_given_faulty_solutions_report_proper_errors(
     grader_verification_test_environment,
 ):
     # Arrange
-    config_file_path, problem_dir_path, report_dir_path = grader_verification_test_environment
-    # Go up from tests/grader/ to project root to find hammurabi.py
-    hammurabi_entry_point = os.path.abspath(
-        os.path.join(__file__, os.pardir, os.pardir, os.pardir, "hammurabi.py")
-    )
+    config_file_path, _problem_dir_path, report_dir_path = grader_verification_test_environment
 
     # Act
-    grader_cmd = f'python "{hammurabi_entry_point}" grade --conf "{config_file_path}"'
+    grader_cmd = f'python -m hammurabi grade --conf "{config_file_path}"'
     exitcode = subprocess.call(grader_cmd, shell=True)
 
     # Assert
