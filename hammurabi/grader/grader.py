@@ -33,6 +33,7 @@ def grade(args: argparse.Namespace) -> None:
     """Run the grading process."""
     config = read_config(args)
     apply_locations_to_config(config)
+    load_custom_verifiers()
     problems = discovery.discover_problems(config)
     scope = get_scope(problems, args)
 
@@ -151,6 +152,12 @@ def get_report_output_dir(config: GraderConfig) -> str:
         shutil.rmtree(report_output_path, ignore_errors=True)
     report_output_path.mkdir(parents=True)
     return str(report_output_path)
+
+
+def load_custom_verifiers() -> None:
+    """Load custom verifiers from the 'verifiers' directory."""
+    verifiers_dir = Path(__file__).parent / "verifiers"
+    verifiers.load_custom_verifiers(verifiers_dir)
 
 
 def judge_solution(solution: Solution, testcases: list[TestCase]) -> list[TestRun]:

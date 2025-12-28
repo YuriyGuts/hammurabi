@@ -190,6 +190,32 @@ Problem-specific configuration (JSON). All fields from `grader.conf` can be over
 | `problem_output_file` | Custom output filename (default: `<problem_name>.out`) |
 | `testcase_score` | Map of test case name to score (default: 1 point each) |
 
+### Custom Verifiers
+
+Built-in verifiers:
+- `AnswerVerifier` (strict byte-to-byte comparison)
+- `IntegerSequenceVerifier`
+- `FloatSequenceVerifier`
+- `WordSequenceVerifier`
+
+To create a custom verifier, add a Python file to the `verifiers/` directory:
+
+```
+|-- verifiers/
+    |-- common.py
+    |-- fibonacci.py  <---
+```
+
+The verifier class must inherit from `AnswerVerifier`. Check `MyCustomVerifier` for an example implementation.
+
+Then reference it in `problem.conf`:
+
+```json
+{
+  "verifier": "FibonacciVerifier"
+}
+```
+
 ## Development
 
 Install dev dependencies:
