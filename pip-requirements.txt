@@ -1,8 +1,0 @@
-Django==1.9.5
-Jinja2==2.8
-MarkupSafe==0.23
-psutil==4.1.0
-py==1.4.31
-pytest==2.9.1
-pytest-pythonpath==0.7
-requests==2.20.1

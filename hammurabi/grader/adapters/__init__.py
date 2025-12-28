@@ -1,25 +1,41 @@
-import inspect
-import pkgutil
-import sys
+"""Language-specific solution adapters."""
 
+from __future__ import annotations
 
-# Load all modules from current directory.
-__all__ = []
+from hammurabi.grader.adapters.base import BaseSolutionAdapter
+from hammurabi.grader.adapters.c import CSolutionAdapter
+from hammurabi.grader.adapters.cpp import CppSolutionAdapter
+from hammurabi.grader.adapters.csharp import CSharpSolutionAdapter
+from hammurabi.grader.adapters.java import JavaSolutionAdapter
+from hammurabi.grader.adapters.javascript import JavaScriptSolutionAdapter
+from hammurabi.grader.adapters.python import PythonSolutionAdapter
+from hammurabi.grader.adapters.ruby import RubySolutionAdapter
 
-for loader, name, is_pkg in pkgutil.walk_packages(__path__):
-    module = loader.find_module(name).load_module(name)
+__all__ = [
+    "BaseSolutionAdapter",
+    "CSolutionAdapter",
+    "CppSolutionAdapter",
+    "CSharpSolutionAdapter",
+    "JavaSolutionAdapter",
+    "JavaScriptSolutionAdapter",
+    "PythonSolutionAdapter",
+    "RubySolutionAdapter",
+    "registered_adapters",
+]
 
-    for name, value in inspect.getmembers(module):
-        if name.startswith('__'):
-            continue
+# Registry mapping language names to adapter classes
+_adapters = [
+    CSolutionAdapter,
+    CppSolutionAdapter,
+    CSharpSolutionAdapter,
+    JavaSolutionAdapter,
+    JavaScriptSolutionAdapter,
+    PythonSolutionAdapter,
+    RubySolutionAdapter,
+]
 
-        globals()[name] = value
-        __all__.append(name)
-
-
-# Create adapter registry.
-registered_adapters = {
-    cls(None).get_language_name(): cls
-    for name, cls in inspect.getmembers(sys.modules[__name__])
-    if isinstance(cls, type) and issubclass(cls, BaseSolutionAdapter) and cls != BaseSolutionAdapter
+registered_adapters: dict[str, type[BaseSolutionAdapter]] = {
+    name: adapter
+    for adapter in _adapters
+    if (name := adapter(None).get_language_name()) is not None
 }

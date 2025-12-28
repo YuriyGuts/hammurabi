@@ -1,15 +1,18 @@
-# Load all modules from current directory.
-__all__ = []
+"""Solution runners for executing solutions."""
 
-import pkgutil
-import inspect
+from __future__ import annotations
 
-for loader, name, is_pkg in pkgutil.walk_packages(__path__):
-    module = loader.find_module(name).load_module(name)
+from hammurabi.grader.runners.base import BaseSolutionRunner
+from hammurabi.grader.runners.subproc import SubprocessSolutionRunner
 
-    for name, value in inspect.getmembers(module):
-        if name.startswith('__'):
-            continue
+__all__ = [
+    "BaseSolutionRunner",
+    "SubprocessSolutionRunner",
+    "registered_runners",
+]
 
-        globals()[name] = value
-        __all__.append(name)
+# Registry mapping runner names to classes
+registered_runners: dict[str, type[BaseSolutionRunner]] = {
+    "BaseSolutionRunner": BaseSolutionRunner,
+    "SubprocessSolutionRunner": SubprocessSolutionRunner,
+}

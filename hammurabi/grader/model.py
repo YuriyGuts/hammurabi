@@ -1,200 +1,263 @@
+"""Data models for the grader."""
+
+from __future__ import annotations
+
 import time
-import traceback
+from collections.abc import Callable
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Any
+
+from hammurabi.grader.config import ProblemConfig
 
 
-class Problem(object):
-    def __init__(self, name, root_dir, input_filename=None, output_filename=None,
-                 solutions=None, testcases=None, reference_solution=None, config=None):
-        self.name = name
-        self.root_dir = root_dir
-        self.input_filename = input_filename
-        self.output_filename = output_filename
-        self.solutions = solutions if solutions is not None else []
-        self.testcases = testcases if testcases is not None else []
-        self.reference_solution = reference_solution
-        self.config = config
+@dataclass(eq=False)
+class Problem:
+    """A programming problem to be graded."""
 
-    def __str__(self):
-        return "Problem: {self.name}".format(**locals())
+    name: str
+    root_dir: str
+    input_filename: str = ""
+    output_filename: str = ""
+    solutions: list[Solution] = field(default_factory=list)
+    testcases: list[TestCase] = field(default_factory=list)
+    reference_solution: Solution | None = None
+    config: ProblemConfig = field(default_factory=ProblemConfig)
+
+    def __str__(self) -> str:
+        return f"Problem: {self.name}"
 
 
-class Solution(object):
-    def __init__(self, problem, author, root_dir, files=None, language=None, run_command=None):
-        self.problem = problem
-        self.author = author
-        self.root_dir = root_dir
-        self.files = files if files is not None else []
-        self.language = language
-        self.run_command = run_command
+@dataclass(eq=False)
+class Solution:
+    """A submitted solution to a problem."""
 
-    def __str__(self):
-        return "Problem: {self.problem.name}   Author: {self.author}   Language: {self.language}".format(**locals())
+    problem: Problem
+    author: str
+    root_dir: str | None
+    files: list[str] = field(default_factory=list)
+    language: str | None = None
+    run_command: str | None = None
 
-    def get_file_by_predicate(self, predicate):
+    def __str__(self) -> str:
+        return f"Problem: {self.problem.name}   Author: {self.author}   Language: {self.language}"
+
+    def get_file_by_predicate(self, predicate: Callable[[str], bool]) -> str | None:
+        """Return the first file matching the predicate, or None."""
         matches = self.get_files_by_predicate(predicate)
         return matches[0] if len(matches) > 0 else None
 
-    def get_files_by_predicate(self, predicate):
-        matches = [file for file in self.files if predicate(file)]
-        return matches
+    def get_files_by_predicate(self, predicate: Callable[[str], bool]) -> list[str]:
+        """Return all files matching the predicate."""
+        return [file for file in self.files if predicate(file)]
 
 
-class TestCase(object):
-    def __init__(self, problem, name, input_filename, correct_answer_filename, score=1):
-        self.problem = problem
-        self.name = name
-        self.input_filename = input_filename
-        self.correct_answer_filename = correct_answer_filename
-        self.score = score
+@dataclass
+class TestCase:
+    """A single test case for a problem."""
 
-    def __str__(self):
-        return "Problem: {self.problem.name}   Filename: {self.input_filename}   Score: {self.score}".format(**locals())
+    problem: Problem
+    name: str
+    input_filename: str
+    correct_answer_filename: str
+    score: int = 1
+
+    def __str__(self) -> str:
+        return (
+            f"Problem: {self.problem.name}   Filename: {self.input_filename}   Score: {self.score}"
+        )
 
 
-class TestRun(object):
-    def __init__(self, solution, testcase, output_dir, answer_filename, compiler_output_filename, stdout_filename, stderr_filename,
-                 result=None, memory_limit=None, time_limit=None):
-        self.solution = solution
-        self.testcase = testcase
-        self.output_dir = output_dir
-        self.compiler_output_filename = compiler_output_filename
-        self.answer_filename = answer_filename
-        self.stdout_filename = stdout_filename
-        self.stderr_filename = stderr_filename
-        self.result = result
-        self.judge_start_time = None
-        self.judge_end_time = None
-        self.lean_start_time = None
-        self.lean_end_time = None
-        self.memory_limit = memory_limit
-        self.time_limit = time_limit
-        self.data = {}
+@dataclass
+class TestRun:
+    """A single execution of a solution against a test case."""
 
-    def __str__(self):
-        return "Solution: {self.solution.problem.name} / {self.solution.author}, Result: {self.result}".format(**locals())
+    solution: Solution
+    testcase: TestCase
+    output_dir: str | None
+    answer_filename: str | None
+    compiler_output_filename: str | None
+    stdout_filename: str | None
+    stderr_filename: str | None
+    result: TestRunResult | None = None
+    memory_limit: int | None = None
+    time_limit: float | None = None
+    judge_start_time: int | None = field(default=None, repr=False)
+    judge_end_time: int | None = field(default=None, repr=False)
+    lean_start_time: int | None = field(default=None, repr=False)
+    lean_end_time: int | None = field(default=None, repr=False)
+    data: dict[str, Any] = field(default_factory=dict, repr=False)
 
-    def record_judge_start_time(self):
+    def __str__(self) -> str:
+        return (
+            f"Solution: {self.solution.problem.name} / {self.solution.author}, "
+            f"Result: {self.result}"
+        )
+
+    def record_judge_start_time(self) -> None:
+        """Record the start time of the judging process."""
         self.judge_start_time = self._get_timestamp()
 
-    def record_judge_end_time(self):
+    def record_judge_end_time(self) -> None:
+        """Record the end time of the judging process."""
         self.judge_end_time = self._get_timestamp()
 
-    def record_lean_start_time(self):
+    def record_lean_start_time(self) -> None:
+        """Record the start time of the actual solution execution."""
         self.lean_start_time = self._get_timestamp()
 
-    def record_lean_end_time(self):
+    def record_lean_end_time(self) -> None:
+        """Record the end time of the actual solution execution."""
         self.lean_end_time = self._get_timestamp()
 
-    def get_judge_elapsed_milliseconds(self):
+    def get_judge_elapsed_milliseconds(self) -> int:
+        """Return total elapsed time including judge overhead."""
+        if self.judge_end_time is None or self.judge_start_time is None:
+            return 0
         return self.judge_end_time - self.judge_start_time
 
-    def get_lean_elapsed_milliseconds(self):
+    def get_lean_elapsed_milliseconds(self) -> int:
+        """Return elapsed time for just the solution execution."""
         if self.lean_start_time is None or self.lean_end_time is None:
             return 0
         return self.lean_end_time - self.lean_start_time
 
-    def _get_timestamp(self):
+    def _get_timestamp(self) -> int:
+        """Return current time in milliseconds."""
         return int(round(time.time() * 1000))
 
 
-class TestRunResult(object):
-    def __init__(self, status_code, status, score=0):
-        self.status_code = status_code
-        self.status = status
-        self.score = score
+@dataclass(kw_only=True)
+class TestRunResult:
+    """Base class for test run results."""
 
-    def __str__(self):
-        return "[{self.status_code}] {self.status}, Score: {self.score}".format(**locals())
+    status_code: str
+    status: str
+    score: int = 0
 
-    def is_correct(self):
+    def __str__(self) -> str:
+        return f"[{self.status_code}] {self.status}, Score: {self.score}"
+
+    def is_correct(self) -> bool:
+        """Return True if the result indicates a correct answer."""
         return False
 
-    def format_details(self):
+    def format_details(self) -> str | None:
+        """Return detailed information about the result."""
         return None
 
 
+@dataclass
 class TestRunCorrectAnswerResult(TestRunResult):
-    def __init__(self):
-        super(TestRunCorrectAnswerResult, self).__init__("C", "Correct Answer")
+    """Result indicating the answer was correct."""
 
-    def is_correct(self):
+    status_code: str = field(default="C", init=False)
+    status: str = field(default="Correct Answer", init=False)
+
+    def is_correct(self) -> bool:
         return True
 
 
+@dataclass
 class TestRunWrongAnswerResult(TestRunResult):
-    def __init__(self, expected=None, actual=None, custom_message=None):
-        super(TestRunWrongAnswerResult, self).__init__("W", "Wrong Answer")
-        self.expected = expected
-        self.actual = actual
-        self.custom_message = custom_message
+    """Result indicating the answer was incorrect."""
 
-    def format_details(self):
+    expected: str | None = None
+    actual: str | None = None
+    custom_message: str | None = None
+    status_code: str = field(default="W", init=False)
+    status: str = field(default="Wrong Answer", init=False)
+
+    def format_details(self) -> str | None:
         if self.custom_message is not None:
             return self.custom_message
-        return "Expected: {self.expected}, Actual: {self.actual}".format(**locals())
+        return f"Expected: {self.expected}, Actual: {self.actual}"
 
 
+@dataclass
 class TestRunRuntimeErrorResult(TestRunResult):
-    def __init__(self, message):
-        super(TestRunRuntimeErrorResult, self).__init__("R", "Runtime Error")
-        self.message = message
+    """Result indicating a runtime error occurred."""
 
-    def format_details(self):
+    message: str | None = None
+    status_code: str = field(default="R", init=False)
+    status: str = field(default="Runtime Error", init=False)
+
+    def format_details(self) -> str | None:
         return self.message
 
 
+@dataclass
 class TestRunFormatErrorResult(TestRunResult):
-    def __init__(self, message):
-        super(TestRunFormatErrorResult, self).__init__("F", "Invalid Output Format")
-        self.message = message
+    """Result indicating the output format was invalid."""
 
-    def format_details(self):
+    message: str
+    status_code: str = field(default="F", init=False)
+    status: str = field(default="Invalid Output Format", init=False)
+
+    def format_details(self) -> str | None:
         return self.message
 
 
+@dataclass
 class TestRunInternalErrorResult(TestRunResult):
-    def __init__(self, exception_info):
-        super(TestRunInternalErrorResult, self).__init__("X", "Judge Internal Error")
-        self.exception_info = exception_info
+    """Result indicating an internal judge error occurred."""
 
-    def format_details(self):
+    exception_info: str | None = None
+    status_code: str = field(default="X", init=False)
+    status: str = field(default="Judge Internal Error", init=False)
+
+    def format_details(self) -> str | None:
         if self.exception_info is None or len(self.exception_info) == 0:
-            return super(TestRunInternalErrorResult, self).format_details()
+            return super().format_details()
         return self.exception_info
 
 
+@dataclass
 class TestRunCompilationErrorResult(TestRunResult):
-    def __init__(self, message):
-        super(TestRunCompilationErrorResult, self).__init__("E", "Compilation Error")
-        self.message = message
+    """Result indicating compilation failed."""
 
-    def format_details(self):
+    message: str | None = None
+    status_code: str = field(default="E", init=False)
+    status: str = field(default="Compilation Error", init=False)
+
+    def format_details(self) -> str | None:
         return self.message
 
 
+@dataclass
 class TestRunSolutionMissingResult(TestRunResult):
-    def __init__(self):
-        super(TestRunSolutionMissingResult, self).__init__("M", "Solution Missing")
+    """Result indicating no solution was found."""
+
+    status_code: str = field(default="M", init=False)
+    status: str = field(default="Solution Missing", init=False)
 
 
+@dataclass
 class TestRunUnverifiedResult(TestRunResult):
-    def __init__(self, message):
-        super(TestRunUnverifiedResult, self).__init__("U", "Unverified")
-        self.message = message
+    """Result indicating the solution was not verified."""
 
-    def format_details(self):
+    message: str
+    status_code: str = field(default="U", init=False)
+    status: str = field(default="Unverified", init=False)
+
+    def format_details(self) -> str | None:
         return self.message
 
 
+@dataclass
 class TestRunTimeoutResult(TestRunResult):
-    def __init__(self, timeout):
-        super(TestRunTimeoutResult, self).__init__("T", "Timeout")
-        self.timeout = timeout
+    """Result indicating the solution exceeded the time limit."""
 
-    def format_details(self):
-        return "Execution time exceeded the limit of {self.timeout:.2g} seconds".format(**locals())
+    timeout: float
+    status_code: str = field(default="T", init=False)
+    status: str = field(default="Timeout", init=False)
+
+    def format_details(self) -> str | None:
+        return f"Execution time exceeded the limit of {self.timeout:.2g} seconds"
 
 
-class GraderJobScope(object):
-    def __init__(self, tasks):
-        self.tasks = tasks
+@dataclass
+class GraderJobScope:
+    """Defines the scope of a grading job."""
+
+    tasks: dict[Problem, dict[Solution, list[TestCase]]]

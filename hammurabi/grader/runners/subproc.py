@@ -1,68 +1,103 @@
-import psutil
+"""Subprocess-based solution runner with timeout support."""
+
+from __future__ import annotations
+
+import contextlib
 import subprocess
 import threading
 
+import psutil
+
+from hammurabi.exceptions import SubprocessTimeoutError
+from hammurabi.exceptions import TestRunPrematureTerminationError
+from hammurabi.grader.model import TestRun
+from hammurabi.grader.model import TestRunTimeoutResult
 from hammurabi.grader.runners.base import BaseSolutionRunner
-from hammurabi.grader.model import *
-from hammurabi.utils.exceptions import *
 
 
 class SubprocessSolutionRunner(BaseSolutionRunner):
-    def __init__(self):
-        super(SubprocessSolutionRunner, self).__init__()
+    """Runs solutions in a subprocess with timeout enforcement."""
 
-    def run(self, testrun, cmd):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def run(self, testrun: TestRun, cmd: str) -> None:
+        """Run the command with time limit enforcement."""
         config = testrun.solution.problem.config
-        time_limit = config.get_safe("limits/time/{testrun.solution.language}".format(**locals()), default_value=20)
-        multiplier = config.get_safe("limits/time_limit_multiplier", default_value=1.0)
+        time_limit = config.limits.time.get_for_language(testrun.solution.language)
+        multiplier = config.limits.time_limit_multiplier
         adjusted_time_limit = time_limit * multiplier
 
         try:
             self.run_command_with_timeout(testrun, cmd, adjusted_time_limit)
         except SubprocessTimeoutError as e:
             result = TestRunTimeoutResult(adjusted_time_limit)
-            raise TestRunPrematureTerminationError(result)
+            raise TestRunPrematureTerminationError(result) from e
 
-    def run_command_with_timeout(self, testrun, cmd, timeout_sec):
-        """Execute `cmd` in a subprocess and enforce timeout `timeout_sec` seconds.
+    def run_command_with_timeout(
+        self, testrun: TestRun, cmd: str, timeout_sec: float
+    ) -> int | None:
+        """
+        Execute a command in a subprocess with timeout enforcement.
 
-        Return subprocess exit code on natural completion of the subprocess.
-        Raise an exception if timeout expires before subprocess completes."""
+        Parameters
+        ----------
+        testrun
+            The test run context.
+        cmd
+            Command to execute.
+        timeout_sec
+            Timeout in seconds.
 
-        def do_kill_process(process):
-            try:
+        Returns
+        -------
+        int | None
+            Exit code on natural completion.
+
+        Raises
+        ------
+        SubprocessTimeoutError
+            If the timeout expires before completion.
+        """
+
+        def do_kill_process(process: psutil.Process) -> None:
+            with contextlib.suppress(psutil.NoSuchProcess):
                 process.kill()
-            except psutil.NoSuchProcess:
-                pass
 
-        def kill_process():
-            timer.expired = True
+        def kill_process() -> None:
+            timer.expired = True  # type: ignore[attr-defined]
             process = psutil.Process(proc.pid)
             for child_process in process.children(recursive=True):
                 do_kill_process(child_process)
             do_kill_process(process)
 
-        with open(testrun.stdout_filename, "w") as stdout:
-            with open(testrun.stderr_filename, "w") as stderr:
-                testrun.record_lean_start_time()
-                proc = subprocess.Popen(cmd, shell=True, cwd=testrun.solution.root_dir, stdout=stdout, stderr=stderr)
+        assert testrun.stdout_filename is not None
+        assert testrun.stderr_filename is not None
+        with (
+            open(testrun.stdout_filename, "w", encoding="utf-8") as stdout,
+            open(testrun.stderr_filename, "w", encoding="utf-8") as stderr,
+        ):
+            testrun.record_lean_start_time()
+            proc = subprocess.Popen(
+                cmd, shell=True, cwd=testrun.solution.root_dir, stdout=stdout, stderr=stderr
+            )
 
-                timer = threading.Timer(timeout_sec, kill_process)
-                timer.setDaemon(True)
-                timer.expired = False
-                timer.start()
-                proc.communicate()
+            timer = threading.Timer(timeout_sec, kill_process)
+            timer.daemon = True
+            timer.expired = False  # type: ignore[attr-defined]
+            timer.start()
+            proc.communicate()
 
-                testrun.record_lean_end_time()
-                if timer.expired:
-                    # Process killed by timer -> raise an exception.
-                    raise SubprocessTimeoutError(
-                        message="Process #{proc.pid} killed after {timeout_sec} seconds".format(**locals()),
-                        timeout=timeout_sec,
-                        exit_code=proc.returncode
-                    )
+            testrun.record_lean_end_time()
+            if timer.expired:  # type: ignore[attr-defined]
+                # Process killed by timer -> raise an exception.
+                raise SubprocessTimeoutError(
+                    message=f"Process #{proc.pid} killed after {timeout_sec} seconds",
+                    timeout=timeout_sec,
+                    exit_code=proc.returncode,
+                )
 
-                # Process completed naturally -> cancel the timer and return the exit code.
-                timer.cancel()
+            # Process completed naturally -> cancel the timer and return the exit code.
+            timer.cancel()
 
-                return proc.returncode
+            return proc.returncode
