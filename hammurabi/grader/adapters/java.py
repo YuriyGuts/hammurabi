@@ -18,20 +18,25 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe() -> None:
+        """Print Java compiler and runtime version information."""
         subprocess.call("java -version", shell=True)
         subprocess.call("javac -version", shell=True)
 
     def get_language_name(self) -> str:
+        """Return the language identifier."""
         return "java"
 
     def get_preferred_extensions(self) -> list[str]:
+        """Return file extensions for Java source files."""
         return [".java"]
 
     def get_compile_command_line(self, testrun: TestRun) -> str:
+        """Return the command to compile Java source files."""
         java_sources = " ".join([f'"{file}"' for file in self.get_source_files()])
         return f"javac -O -d . {java_sources}"
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
+        """Return the command to execute the compiled Java class."""
         entry_point_file = self.get_entry_point_file()
         if entry_point_file is None:
             return ["java", ""]

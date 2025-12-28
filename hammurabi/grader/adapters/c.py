@@ -19,6 +19,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe() -> None:
+        """Print C compiler version information."""
         if platform.system() == "Windows":
             # Just use C++ compiler on Windows.
             subprocess.call("vsvars32.bat & cl", shell=True)
@@ -26,12 +27,15 @@ class CSolutionAdapter(BaseSolutionAdapter):
             subprocess.call("LC_ALL=C LANG=C gcc --version", shell=True)
 
     def get_language_name(self) -> str:
+        """Return the language identifier."""
         return "c"
 
     def get_preferred_extensions(self) -> list[str]:
+        """Return file extensions for C source files."""
         return [".c"]
 
     def get_compile_command_line(self, testrun: TestRun) -> str:
+        """Return the command to compile C source files."""
         c_sources = " ".join([f'"{file}"' for file in self.get_source_files()])
         executable_filename = self._get_executable_filename(testrun)
 
@@ -43,6 +47,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
             return f'LC_ALL=C LANG=C gcc --std=c99 -O2 {c_sources} -o "{executable_filename}"'
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
+        """Return the command to execute the compiled program."""
         executable_filename = self._get_executable_filename(testrun)
         if platform.system() == "Windows":
             return [executable_filename]

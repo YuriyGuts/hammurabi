@@ -23,15 +23,19 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe() -> None:
+        """Print .NET SDK version information."""
         subprocess.call("dotnet --version", shell=True)
 
     def get_language_name(self) -> str:
+        """Return the language identifier."""
         return "csharp"
 
     def get_preferred_extensions(self) -> list[str]:
+        """Return file extensions for C# source files."""
         return [".cs"]
 
     def get_compile_command_line(self, testrun: TestRun) -> str:
+        """Return the command to compile C# source files."""
         # Create a temporary .csproj file for dotnet build
         project_name = testrun.solution.problem.name
         assert testrun.solution.root_dir is not None
@@ -72,6 +76,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
             return "net8.0"
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
+        """Return the command to execute the compiled .NET assembly."""
         project_name = testrun.solution.problem.name
         assert testrun.solution.root_dir is not None
         dll_filename = Path(testrun.solution.root_dir) / f"{project_name}.dll"

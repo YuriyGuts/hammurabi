@@ -25,6 +25,7 @@ class Problem:
     config: ProblemConfig = field(default_factory=ProblemConfig)
 
     def __str__(self) -> str:
+        """Return string representation of the problem."""
         return f"Problem: {self.name}"
 
 
@@ -40,6 +41,7 @@ class Solution:
     run_command: str | None = None
 
     def __str__(self) -> str:
+        """Return string representation of the solution."""
         return f"Problem: {self.problem.name}   Author: {self.author}   Language: {self.language}"
 
     def get_file_by_predicate(self, predicate: Callable[[str], bool]) -> str | None:
@@ -63,6 +65,7 @@ class TestCase:
     score: int = 1
 
     def __str__(self) -> str:
+        """Return string representation of the test case."""
         return (
             f"Problem: {self.problem.name}   Filename: {self.input_filename}   Score: {self.score}"
         )
@@ -89,6 +92,7 @@ class TestRun:
     data: dict[str, Any] = field(default_factory=dict, repr=False)
 
     def __str__(self) -> str:
+        """Return string representation of the test run."""
         return (
             f"Solution: {self.solution.problem.name} / {self.solution.author}, "
             f"Result: {self.result}"
@@ -136,6 +140,7 @@ class TestRunResult:
     score: int = 0
 
     def __str__(self) -> str:
+        """Return string representation of the result."""
         return f"[{self.status_code}] {self.status}, Score: {self.score}"
 
     def is_correct(self) -> bool:
@@ -155,6 +160,7 @@ class TestRunCorrectAnswerResult(TestRunResult):
     status: str = field(default="Correct Answer", init=False)
 
     def is_correct(self) -> bool:
+        """Return True since this result indicates a correct answer."""
         return True
 
 
@@ -169,6 +175,7 @@ class TestRunWrongAnswerResult(TestRunResult):
     status: str = field(default="Wrong Answer", init=False)
 
     def format_details(self) -> str | None:
+        """Return details about the expected vs actual values."""
         if self.custom_message is not None:
             return self.custom_message
         return f"Expected: {self.expected}, Actual: {self.actual}"
@@ -183,6 +190,7 @@ class TestRunRuntimeErrorResult(TestRunResult):
     status: str = field(default="Runtime Error", init=False)
 
     def format_details(self) -> str | None:
+        """Return the runtime error message."""
         return self.message
 
 
@@ -195,6 +203,7 @@ class TestRunFormatErrorResult(TestRunResult):
     status: str = field(default="Invalid Output Format", init=False)
 
     def format_details(self) -> str | None:
+        """Return the format error message."""
         return self.message
 
 
@@ -207,6 +216,7 @@ class TestRunInternalErrorResult(TestRunResult):
     status: str = field(default="Judge Internal Error", init=False)
 
     def format_details(self) -> str | None:
+        """Return the exception traceback information."""
         if self.exception_info is None or len(self.exception_info) == 0:
             return super().format_details()
         return self.exception_info
@@ -221,6 +231,7 @@ class TestRunCompilationErrorResult(TestRunResult):
     status: str = field(default="Compilation Error", init=False)
 
     def format_details(self) -> str | None:
+        """Return the compilation error message."""
         return self.message
 
 
@@ -241,6 +252,7 @@ class TestRunUnverifiedResult(TestRunResult):
     status: str = field(default="Unverified", init=False)
 
     def format_details(self) -> str | None:
+        """Return the reason the result was not verified."""
         return self.message
 
 
@@ -253,6 +265,7 @@ class TestRunTimeoutResult(TestRunResult):
     status: str = field(default="Timeout", init=False)
 
     def format_details(self) -> str | None:
+        """Return a message about the timeout limit exceeded."""
         return f"Execution time exceeded the limit of {self.timeout:.2g} seconds"
 
 

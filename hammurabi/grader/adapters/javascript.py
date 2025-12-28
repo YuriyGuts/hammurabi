@@ -17,14 +17,18 @@ class JavaScriptSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe() -> None:
+        """Print Node.js version information."""
         subprocess.call("node --version", shell=True)
 
     def get_language_name(self) -> str:
+        """Return the language identifier."""
         return "javascript"
 
     def get_preferred_extensions(self) -> list[str]:
+        """Return file extensions for JavaScript source files."""
         return [".js"]
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
+        """Return the command to execute the JavaScript file."""
         entry_point_file = self.get_entry_point_file()
         return ["node", f'"{entry_point_file}"']

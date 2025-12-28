@@ -17,14 +17,18 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
 
     @staticmethod
     def describe() -> None:
+        """Print Python interpreter version information."""
         subprocess.call("python --version", shell=True)
 
     def get_language_name(self) -> str:
+        """Return the language identifier."""
         return "python"
 
     def get_preferred_extensions(self) -> list[str]:
+        """Return file extensions for Python source files."""
         return [".py"]
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
+        """Return the command to execute the Python script."""
         entry_point_file = self.get_entry_point_file()
         return ["python", f'"{entry_point_file}"']

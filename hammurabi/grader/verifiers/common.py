@@ -93,6 +93,7 @@ class IntegerSequenceVerifier(SpaceCharacterSeparatedSequenceVerifier):
         super().__init__()
 
     def map_input_item(self, item: str) -> int:
+        """Convert the input item to an integer."""
         return int(item)
 
 
@@ -103,6 +104,7 @@ class FloatSequenceVerifier(SpaceCharacterSeparatedSequenceVerifier):
         super().__init__()
 
     def map_input_item(self, item: str) -> float:
+        """Convert the input item to a float."""
         return float(item)
 
 
