@@ -121,8 +121,7 @@ Main configuration file (JSON) with all available options and their defaults:
       "javascript": 20.0,
       "php": 18.0,
       "python": 20.0,
-      "ruby": 20.0,
-      "scala": 14.0
+      "ruby": 20.0
     }
   },
   "runner": {

@@ -21,7 +21,6 @@ class TimeLimitsConfig(BaseModel):
     php: float = 18.0
     python: float = 20.0
     ruby: float = 20.0
-    scala: float = 14.0
 
     def get_for_language(self, language: str | None, default: float = 20.0) -> float:
         """Get the time limit for a specific language."""

@@ -259,7 +259,6 @@ def adjust_time_for_language(time: int, language: str | None) -> float:
         "php": 0,
         "python": 0,
         "ruby": 0,
-        "scala": 100,
     }
     runtime_slowness_factors: dict[str, float] = {
         "c": 1.0,
@@ -270,7 +269,6 @@ def adjust_time_for_language(time: int, language: str | None) -> float:
         "php": 4.5,
         "python": 5.0,
         "ruby": 5.0,
-        "scala": 3.5,
     }
 
     slowness_factor_threshold = 50
