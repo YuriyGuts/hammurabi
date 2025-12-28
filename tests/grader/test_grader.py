@@ -1,3 +1,4 @@
+import json
 import os
 import pickle
 import platform
@@ -24,18 +25,15 @@ def generate_hammurabi_environment(tmpdir, template_problem_dir):
         report_dir_path = report_dir_path.replace("\\", "/")
         config_file_path = config_file_path.replace("\\", "/")
 
+    config = {
+        "locations": {
+            "problem_root": problem_dir_path,
+            "report_root": report_dir_path,
+            "report_folder_template": "testrun",
+        }
+    }
     with open(config_file_path, "w", encoding="utf-8") as conf:
-        conf.write(
-            f"""
-            {{
-                "locations": {{
-                    "problem_root": "{problem_dir_path}",
-                    "report_root": "{report_dir_path}",
-                    "report_folder_template": "testrun"
-                }}
-            }}
-        """
-        )
+        conf.write(json.dumps(config, indent=4))
 
     return config_file_path, problem_dir_path, report_dir_path
 

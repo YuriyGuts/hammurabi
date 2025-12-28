@@ -8,27 +8,19 @@ from hammurabi.grader.config import GraderConfig
 from hammurabi.grader.config import ProblemConfig
 from hammurabi.utils import confreader
 
-sample_grader_config = """
-{
+SAMPLE_GRADER_CONFIG = {
     "locations": {
         "problem_root": "problems",
-        "report_root": "reports"
+        "report_root": "reports",
     }
 }
-"""
 
-sample_problem_config = """
-{
+SAMPLE_PROBLEM_CONFIG = {
     "verifier": "CustomVerifier",
-    "problem_input_file": "input.txt"
+    "problem_input_file": "input.txt",
 }
-"""
 
-invalid_config_content = """
-{
-    "locations": }}}
-}
-"""
+INVALID_CONFIG_CONTENT = '{\n    "locations": }}}\n}'
 
 
 @pytest.fixture
@@ -37,7 +29,7 @@ def filename_for_sample_grader_config(tmpdir):
     filename = file_path.strpath
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(sample_grader_config)
+        f.write(json.dumps(SAMPLE_GRADER_CONFIG, indent=4))
 
     return filename
 
@@ -48,7 +40,7 @@ def filename_for_sample_problem_config(tmpdir):
     filename = file_path.strpath
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(sample_problem_config)
+        f.write(json.dumps(SAMPLE_PROBLEM_CONFIG, indent=4))
 
     return filename
 
@@ -59,7 +51,7 @@ def filename_for_invalid_config(tmpdir):
     filename = file_path.strpath
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(invalid_config_content)
+        f.write(INVALID_CONFIG_CONTENT)
 
     return filename
 

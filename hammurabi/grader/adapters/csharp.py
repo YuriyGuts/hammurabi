@@ -5,9 +5,14 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+from jinja2 import Environment
+from jinja2 import FileSystemLoader
+
 from hammurabi.grader.adapters.base import BaseSolutionAdapter
 from hammurabi.grader.model import Solution
 from hammurabi.grader.model import TestRun
+
+TEMPLATES_DIR = Path(__file__).parent.parent / "resources" / "templates"
 
 
 class CSharpSolutionAdapter(BaseSolutionAdapter):
@@ -33,7 +38,26 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         project_dir = Path(testrun.solution.root_dir)
         csproj_path = project_dir / f"{project_name}.csproj"
 
-        # Detect available .NET version
+        target_framework = self._detect_target_framework()
+        source_files = [Path(f).name for f in self.get_source_files()]
+
+        # Render .csproj from template
+        env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+        template = env.get_template("csharp-project.csproj.jinja")
+        csproj_content = template.render(
+            project_name=project_name,
+            target_framework=target_framework,
+            source_files=source_files,
+        )
+
+        with open(csproj_path, "w", encoding="utf-8") as f:
+            f.write(csproj_content)
+
+        # Return the build command
+        return f'cd "{project_dir}" && dotnet build "{csproj_path}" -c Release -o "{project_dir}"'
+
+    def _detect_target_framework(self) -> str:
+        """Detect the installed .NET SDK version and return the target framework."""
         try:
             version_output = subprocess.check_output(
                 ["dotnet", "--list-sdks"], universal_newlines=True
@@ -42,36 +66,10 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
             first_sdk = version_output.strip().split("\n")[0]
             sdk_version = first_sdk.split()[0]
             major_version = sdk_version.split(".")[0]
-            target_framework = f"net{major_version}.0"
+            return f"net{major_version}.0"
         except Exception:
             # Fallback to net8.0 if detection fails
-            target_framework = "net8.0"
-
-        # Generate minimal .csproj content
-        compile_includes = "\n".join(
-            [
-                f'    <Compile Include="{Path(file).name}" />'
-                for file in self.get_source_files()
-            ]
-        )
-        csproj_content = f"""<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>{target_framework}</TargetFramework>
-    <EnableDefaultItems>false</EnableDefaultItems>
-    <AssemblyName>{project_name}</AssemblyName>
-  </PropertyGroup>
-  <ItemGroup>
-{compile_includes}
-  </ItemGroup>
-</Project>"""
-
-        # Write the .csproj file
-        with open(csproj_path, "w", encoding="utf-8") as f:
-            f.write(csproj_content)
-
-        # Return the build command
-        return f'cd "{project_dir}" && dotnet build "{csproj_path}" -c Release -o "{project_dir}"'
+            return "net8.0"
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         project_name = testrun.solution.problem.name

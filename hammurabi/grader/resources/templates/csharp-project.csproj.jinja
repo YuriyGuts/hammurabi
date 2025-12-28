@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>{{ target_framework }}</TargetFramework>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <AssemblyName>{{ project_name }}</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+{% for source_file in source_files %}
+    <Compile Include="{{ source_file }}" />
+{% endfor %}
+  </ItemGroup>
+</Project>
