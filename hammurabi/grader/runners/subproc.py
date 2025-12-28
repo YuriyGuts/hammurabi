@@ -59,13 +59,14 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
         SubprocessTimeoutError
             If the timeout expires before completion.
         """
+        timeout_occurred = threading.Event()
 
         def do_kill_process(process: psutil.Process) -> None:
             with contextlib.suppress(psutil.NoSuchProcess):
                 process.kill()
 
         def kill_process() -> None:
-            timer.expired = True  # type: ignore[attr-defined]
+            timeout_occurred.set()
             process = psutil.Process(proc.pid)
             for child_process in process.children(recursive=True):
                 do_kill_process(child_process)
@@ -84,12 +85,11 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
 
             timer = threading.Timer(timeout_sec, kill_process)
             timer.daemon = True
-            timer.expired = False  # type: ignore[attr-defined]
             timer.start()
             proc.communicate()
 
             testrun.record_lean_end_time()
-            if timer.expired:  # type: ignore[attr-defined]
+            if timeout_occurred.is_set():
                 # Process killed by timer -> raise an exception.
                 raise SubprocessTimeoutError(
                     message=f"Process #{proc.pid} killed after {timeout_sec} seconds",
