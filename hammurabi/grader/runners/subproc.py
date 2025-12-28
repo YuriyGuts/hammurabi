@@ -8,11 +8,11 @@ import threading
 
 import psutil
 
+from hammurabi.exceptions import SubprocessTimeoutError
+from hammurabi.exceptions import TestRunPrematureTerminationError
 from hammurabi.grader.model import TestRun
 from hammurabi.grader.model import TestRunTimeoutResult
 from hammurabi.grader.runners.base import BaseSolutionRunner
-from hammurabi.utils.exceptions import SubprocessTimeoutError
-from hammurabi.utils.exceptions import TestRunPrematureTerminationError
 
 
 class SubprocessSolutionRunner(BaseSolutionRunner):

@@ -9,6 +9,8 @@ import socket
 import traceback
 from pathlib import Path
 
+from hammurabi.exceptions import TestRunPrematureTerminationError
+from hammurabi.exceptions import VerifierCreationError
 from hammurabi.grader import adapters
 from hammurabi.grader import discovery
 from hammurabi.grader import reporting
@@ -25,8 +27,6 @@ from hammurabi.grader.model import TestRunSolutionMissingResult
 from hammurabi.grader.model import TestRunUnverifiedResult
 from hammurabi.grader.verifiers.common import AnswerVerifier
 from hammurabi.utils import confreader
-from hammurabi.utils.exceptions import TestRunPrematureTerminationError
-from hammurabi.utils.exceptions import VerifierCreationError
 
 
 def grade(args: argparse.Namespace) -> None:

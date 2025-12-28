@@ -7,6 +7,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from hammurabi.exceptions import OutputDirectoryError
+from hammurabi.exceptions import TestRunPrematureTerminationError
 from hammurabi.grader import runners
 from hammurabi.grader.config import ProblemConfig
 from hammurabi.grader.model import Solution
@@ -18,8 +20,6 @@ from hammurabi.grader.model import TestRunRuntimeErrorResult
 from hammurabi.grader.model import TestRunSolutionMissingResult
 from hammurabi.grader.runners.base import BaseSolutionRunner
 from hammurabi.utils import fileio
-from hammurabi.utils.exceptions import OutputDirectoryError
-from hammurabi.utils.exceptions import TestRunPrematureTerminationError
 
 
 class BaseSolutionAdapter:
