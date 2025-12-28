@@ -1,7 +1,7 @@
 [project]
 name = "hammurabi"
-version = "0.1.0"
-description = "An online judge for algorithmic contests. Strict, but fair."
+version = "0.4.0"
+description = "An automated judge for algorithmic programming contests. Strict, but fair."
 readme = "README.md"
 license = "BSD-3-Clause"
 requires-python = ">=3.10"

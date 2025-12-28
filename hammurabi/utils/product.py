@@ -1,10 +1,9 @@
 """Product information and banner display utilities."""
 
 import shutil
+from importlib.metadata import version
 
 from hammurabi.utils import laws
-
-VERSION: tuple[int, int, int] = (0, 4, 0)
 
 _BANNER_ART: tuple[str, ...] = (
     r"       ,,--,,     ",
@@ -35,8 +34,7 @@ def _get_terminal_width() -> int:
 
 def get_version_string() -> str:
     """Return the version as a formatted string."""
-    major, minor, patch = VERSION
-    return f"{major}.{minor}.{patch}"
+    return version("hammurabi")
 
 
 def get_banner() -> list[str]:
