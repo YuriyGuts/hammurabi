@@ -253,5 +253,4 @@ laws: list[str] = [
 
 def get_random_law() -> str:
     """Return a random law from the Code of Hammurabi."""
-    random_law = random.choice(laws)
-    return random_law
+    return random.choice(laws)

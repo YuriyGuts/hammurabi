@@ -51,9 +51,7 @@ def _parse_command_line_args(args: list[str]) -> argparse.Namespace:
     argparse.Namespace
         Parsed arguments.
     """
-    top_level_parser = argparse.ArgumentParser(
-        usage=f"{Path(args[0]).name} [COMMAND] [OPTIONS]"
-    )
+    top_level_parser = argparse.ArgumentParser(usage=f"{Path(args[0]).name} [COMMAND] [OPTIONS]")
     subparsers = top_level_parser.add_subparsers(
         title="Available commands", metavar="COMMAND", dest="command"
     )

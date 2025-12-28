@@ -5,9 +5,9 @@ from __future__ import annotations
 import colorsys
 import csv
 import datetime
-import os
 import pickle
 import time
+from pathlib import Path
 
 from jinja2 import FileSystemLoader
 from jinja2.environment import Environment
@@ -173,9 +173,7 @@ def generate_heatmap_report_html(testruns: list[TestRun], filename: str) -> None
 def get_jinja_environment() -> Environment:
     """Create and configure the Jinja2 environment."""
     env = Environment()
-    template_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "resources", "templates")
-    )
+    template_path = Path(__file__).parent / "resources" / "templates"
     env.loader = FileSystemLoader(template_path)
     env.filters.update(
         {
@@ -220,10 +218,12 @@ def dump_preformatted_text(content: str | None) -> str | None:
 
 def dump_file(filename: str | None) -> str | None:
     """Read and dump file contents, truncating if necessary."""
-    content = None
-    if filename is not None and os.path.exists(filename):
-        content = fileio.read_entire_file(filename)
-    return dump_preformatted_text(content)
+    if filename is None:
+        return None
+    path = Path(filename)
+    if not path.exists():
+        return None
+    return dump_preformatted_text(fileio.read_entire_file(filename))
 
 
 def get_contextual_style_by_result(testrun_result: TestRunResult) -> str:

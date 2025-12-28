@@ -1,20 +1,19 @@
+import shutil
+
 from hammurabi.utils import product
 
 
 def test_get_version_string_returns_valid_version_string():
-    # Act
     version = product.get_version_string()
 
-    # Assert
     assert len(version) > 0
     assert len(version.split(".")) == 3
 
 
 def test_get_banner_returns_non_empty_banner():
-    # Act
     banner = product.get_banner()
+    terminal_width = shutil.get_terminal_size(fallback=(80, 24)).columns
 
-    # Assert
     assert isinstance(banner, list)
     assert len(banner) > 0
-    assert not any(len(line) > product._terminal_width for line in banner)
+    assert all(len(line) <= terminal_width for line in banner)

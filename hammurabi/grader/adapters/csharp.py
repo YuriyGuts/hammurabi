@@ -39,7 +39,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         csproj_path = project_dir / f"{project_name}.csproj"
 
         target_framework = self._detect_target_framework()
-        source_files = [Path(f).name for f in self.get_source_files()]
+        source_files = [Path(f).name for f in self.get_source_files() if "obj" not in Path(f).parts]
 
         # Render .csproj from template
         env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))

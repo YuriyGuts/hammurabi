@@ -1,10 +1,12 @@
 """Product information and banner display utilities."""
 
+import shutil
+
 from hammurabi.utils import laws
 
-version: tuple[int, int, int] = (0, 4, 0)
+VERSION: tuple[int, int, int] = (0, 4, 0)
 
-banner: list[str] = [
+_BANNER_ART: tuple[str, ...] = (
     r"       ,,--,,     ",
     r"      /______\    ",
     r"     /()_()_()\   ",
@@ -21,32 +23,40 @@ banner: list[str] = [
     r"    \||||||||||/  ",
     r"     \||****||/   ",
     r"      \||||||/    ",
-]
+)
 
-_terminal_width: int = 80
+_DEFAULT_TERMINAL_WIDTH: int = 80
+
+
+def _get_terminal_width() -> int:
+    """Get the current terminal width, with a sensible default."""
+    return shutil.get_terminal_size(fallback=(_DEFAULT_TERMINAL_WIDTH, 24)).columns
 
 
 def get_version_string() -> str:
     """Return the version as a formatted string."""
-    major, minor, patch = version
-    return f"{major:d}.{minor:d}.{patch:d}"
+    major, minor, patch = VERSION
+    return f"{major}.{minor}.{patch}"
 
 
 def get_banner() -> list[str]:
     """Generate the application banner with version and a random law."""
+    banner = list(_BANNER_ART)
+    terminal_width = _get_terminal_width()
     header_line_index = 2
     law_line_index = 4
 
-    banner[header_line_index] = _expand_banner_line(
-        banner[header_line_index], "Hammurabi v" + get_version_string()
+    banner[header_line_index] = _append_to_banner_line(
+        banner[header_line_index], f" Hammurabi v{get_version_string()}"
     )
 
     random_law = laws.get_random_law()
-    wrapped_law = _wrap_string(random_law, _terminal_width - len(banner[law_line_index]))
+    text_width = terminal_width - len(banner[law_line_index]) - 2  # 2 for padding
+    wrapped_law = _wrap_string(random_law, text_width)
 
     for index, line in enumerate(wrapped_law):
         if index + law_line_index < len(banner):
-            banner[index + law_line_index] = _expand_banner_line(
+            banner[index + law_line_index] = _append_to_banner_line(
                 banner[index + law_line_index], line
             )
 
@@ -61,11 +71,9 @@ def print_banner() -> None:
         print(line)
 
 
-def _expand_banner_line(line: str, expansion_text: str) -> str:
-    """Add expansion text to the right side of a banner line."""
-    spare_width = _terminal_width - len(line) - len(expansion_text)
-    spacer = " " * (spare_width // 2)
-    return f"{line}{spacer}{expansion_text}{spacer}"
+def _append_to_banner_line(line: str, text: str) -> str:
+    """Append text to the right side of a banner line with a small gap."""
+    return f"{line}  {text}"
 
 
 def _wrap_string(string: str, width: int) -> list[str]:
