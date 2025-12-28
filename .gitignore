@@ -19,18 +19,15 @@ hammurabi/grader/verifiers/*
 !tests/**/*.in
 !tests/**/*.out
 
-# IDEs
+# -----------------
+# IDEs & AI Agents
+# -----------------
 .idea
-
-# -----------------
-# AI Agents
-# -----------------
 .claude
 
 # -----------------
 # Python
 # -----------------
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
