@@ -17,6 +17,9 @@ class SubprocessTimeoutError(Exception):
 class TestRunPrematureTerminationError(Exception):
     """Raised when a test run terminates before producing output."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     def __init__(self, testrun_result: TestRunResult) -> None:
         super().__init__("Solution has failed before producing any answers.")
         self.result = testrun_result

@@ -58,6 +58,9 @@ class Solution:
 class TestCase:
     """A single test case for a problem."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     problem: Problem
     name: str
     input_filename: str
@@ -74,6 +77,9 @@ class TestCase:
 @dataclass
 class TestRun:
     """A single execution of a solution against a test case."""
+
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
 
     solution: Solution
     testcase: TestCase
@@ -135,6 +141,9 @@ class TestRun:
 class TestRunResult:
     """Base class for test run results."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     status_code: str
     status: str
     score: int = 0
@@ -156,6 +165,9 @@ class TestRunResult:
 class TestRunCorrectAnswerResult(TestRunResult):
     """Result indicating the answer was correct."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     status_code: str = field(default="C", init=False)
     status: str = field(default="Correct Answer", init=False)
 
@@ -167,6 +179,9 @@ class TestRunCorrectAnswerResult(TestRunResult):
 @dataclass
 class TestRunWrongAnswerResult(TestRunResult):
     """Result indicating the answer was incorrect."""
+
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
 
     expected: str | None = None
     actual: str | None = None
@@ -185,6 +200,9 @@ class TestRunWrongAnswerResult(TestRunResult):
 class TestRunRuntimeErrorResult(TestRunResult):
     """Result indicating a runtime error occurred."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     message: str | None = None
     status_code: str = field(default="R", init=False)
     status: str = field(default="Runtime Error", init=False)
@@ -198,6 +216,9 @@ class TestRunRuntimeErrorResult(TestRunResult):
 class TestRunFormatErrorResult(TestRunResult):
     """Result indicating the output format was invalid."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     message: str
     status_code: str = field(default="F", init=False)
     status: str = field(default="Invalid Output Format", init=False)
@@ -210,6 +231,9 @@ class TestRunFormatErrorResult(TestRunResult):
 @dataclass
 class TestRunInternalErrorResult(TestRunResult):
     """Result indicating an internal judge error occurred."""
+
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
 
     exception_info: str | None = None
     status_code: str = field(default="X", init=False)
@@ -226,6 +250,9 @@ class TestRunInternalErrorResult(TestRunResult):
 class TestRunCompilationErrorResult(TestRunResult):
     """Result indicating compilation failed."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     message: str | None = None
     status_code: str = field(default="E", init=False)
     status: str = field(default="Compilation Error", init=False)
@@ -239,6 +266,9 @@ class TestRunCompilationErrorResult(TestRunResult):
 class TestRunSolutionMissingResult(TestRunResult):
     """Result indicating no solution was found."""
 
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
     status_code: str = field(default="M", init=False)
     status: str = field(default="Solution Missing", init=False)
 
@@ -246,6 +276,9 @@ class TestRunSolutionMissingResult(TestRunResult):
 @dataclass
 class TestRunUnverifiedResult(TestRunResult):
     """Result indicating the solution was not verified."""
+
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
 
     message: str
     status_code: str = field(default="U", init=False)
@@ -259,6 +292,9 @@ class TestRunUnverifiedResult(TestRunResult):
 @dataclass
 class TestRunTimeoutResult(TestRunResult):
     """Result indicating the solution exceeded the time limit."""
+
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
 
     timeout: float
     status_code: str = field(default="T", init=False)

@@ -31,11 +31,11 @@ from hammurabi.utils import confreader
 
 def grade(args: argparse.Namespace) -> None:
     """Run the grading process."""
-    config = read_config(args)
-    apply_locations_to_config(config)
-    load_custom_verifiers()
+    config = _read_config(args)
+    _apply_locations_to_config(config)
+    _load_custom_verifiers()
     problems = discovery.discover_problems(config)
-    scope = get_scope(problems, args)
+    scope = _get_scope(problems, args)
 
     testruns: list[TestRun] = []
 
@@ -61,11 +61,11 @@ def grade(args: argparse.Namespace) -> None:
     except KeyboardInterrupt:
         pass
 
-    testruns = fill_testruns_for_missing_solutions(testruns)
-    generate_reports(config, testruns)
+    testruns = _fill_testruns_for_missing_solutions(testruns)
+    _generate_reports(config, testruns)
 
 
-def read_config(args: argparse.Namespace) -> GraderConfig:
+def _read_config(args: argparse.Namespace) -> GraderConfig:
     """Read and return the grader configuration."""
     if args.conf is not None:
         config_file = Path(args.conf).resolve()
@@ -81,7 +81,7 @@ def read_config(args: argparse.Namespace) -> GraderConfig:
     return confreader.read_grader_config(str(config_file))
 
 
-def get_scope(problems: list[Problem], args: argparse.Namespace) -> GraderJobScope:
+def _get_scope(problems: list[Problem], args: argparse.Namespace) -> GraderJobScope:
     """Build the scope of problems, solutions, and test cases to grade."""
     tasks: dict[Problem, dict[Solution, list[TestCase]]] = {}
     problems_to_run = [
@@ -118,14 +118,14 @@ def get_scope(problems: list[Problem], args: argparse.Namespace) -> GraderJobSco
     return GraderJobScope(tasks)
 
 
-def apply_locations_to_config(config: GraderConfig) -> None:
+def _apply_locations_to_config(config: GraderConfig) -> None:
     """Set up directory paths in the configuration."""
-    config.problem_root_dir = get_problem_root_dir(config)
-    config.report_root_dir = get_report_root_dir(config)
-    config.report_output_dir = get_report_output_dir(config)
+    config.problem_root_dir = _get_problem_root_dir(config)
+    config.report_root_dir = _get_report_root_dir(config)
+    config.report_output_dir = _get_report_output_dir(config)
 
 
-def get_problem_root_dir(config: GraderConfig) -> str:
+def _get_problem_root_dir(config: GraderConfig) -> str:
     """Get the root directory for problems."""
     problem_root_path = Path(config.locations.problem_root)
     if not problem_root_path.is_absolute():
@@ -133,7 +133,7 @@ def get_problem_root_dir(config: GraderConfig) -> str:
     return str(problem_root_path)
 
 
-def get_report_root_dir(config: GraderConfig) -> str:
+def _get_report_root_dir(config: GraderConfig) -> str:
     """Get the root directory for reports."""
     report_root_path = Path(config.locations.report_root)
     if not report_root_path.is_absolute():
@@ -141,7 +141,7 @@ def get_report_root_dir(config: GraderConfig) -> str:
     return str(report_root_path)
 
 
-def get_report_output_dir(config: GraderConfig) -> str:
+def _get_report_output_dir(config: GraderConfig) -> str:
     """Create and return the output directory for this grading run."""
     dt = datetime.datetime.now()
     hostname = socket.getfqdn()
@@ -154,7 +154,7 @@ def get_report_output_dir(config: GraderConfig) -> str:
     return str(report_output_path)
 
 
-def load_custom_verifiers() -> None:
+def _load_custom_verifiers() -> None:
     """Load custom verifiers from the 'verifiers' directory."""
     verifiers_dir = Path(__file__).parent / "verifiers"
     verifiers.load_custom_verifiers(verifiers_dir)
@@ -163,7 +163,7 @@ def load_custom_verifiers() -> None:
 def judge_solution(solution: Solution, testcases: list[TestCase]) -> list[TestRun]:
     """Judge all test cases for a solution."""
     try:
-        adapter = create_adapter(solution)
+        adapter = _create_adapter(solution)
         adapter.prepare()
     except Exception:
         print("Cannot create solution adapter.")
@@ -207,7 +207,7 @@ def judge_testcase(solution: Solution, testcase: TestCase, adapter: BaseSolution
         adapter.run(testrun)
 
         if solution != solution.problem.reference_solution:
-            verifier = create_verifier(testrun)
+            verifier = _create_verifier(testrun)
             verifier.verify(testrun)
         else:
             testrun.result = TestRunUnverifiedResult(
@@ -220,7 +220,8 @@ def judge_testcase(solution: Solution, testcase: TestCase, adapter: BaseSolution
     except KeyboardInterrupt:
         raise
 
-    except Exception:
+    except Exception as exc:  # noqa: BLE001 - Intentionally catching all exceptions from solution
+        del exc  # Unused, we use traceback.format_exc() instead
         testrun.result = TestRunInternalErrorResult(exception_info=traceback.format_exc())
 
     if testrun.result is not None and testrun.result.is_correct():
@@ -231,7 +232,7 @@ def judge_testcase(solution: Solution, testcase: TestCase, adapter: BaseSolution
     return testrun
 
 
-def create_adapter(solution: Solution) -> BaseSolutionAdapter:
+def _create_adapter(solution: Solution) -> BaseSolutionAdapter:
     """Create the appropriate adapter for a solution's language."""
     if solution.language is None:
         return adapters.BaseSolutionAdapter(solution)
@@ -239,7 +240,7 @@ def create_adapter(solution: Solution) -> BaseSolutionAdapter:
     return cls(solution)
 
 
-def create_verifier(testrun: TestRun) -> AnswerVerifier:
+def _create_verifier(testrun: TestRun) -> AnswerVerifier:
     """Create a verifier for the test run."""
     verifier_name = testrun.solution.problem.config.verifier
     verifier_class = verifiers.registered_verifiers.get(verifier_name)
@@ -251,36 +252,36 @@ def create_verifier(testrun: TestRun) -> AnswerVerifier:
     return verifier_class()
 
 
-def fill_testruns_for_missing_solutions(testruns: list[TestRun]) -> list[TestRun]:
+def _fill_testruns_for_missing_solutions(testruns: list[TestRun]) -> list[TestRun]:
     """Add placeholder test runs for authors who didn't submit solutions."""
     padded_testruns = testruns
     unique_authors = sorted({testrun.solution.author for testrun in testruns})
-    unique_problems = sorted({testrun.solution.problem.name for testrun in testruns})
+    unique_problem_names = sorted({testrun.solution.problem.name for testrun in testruns})
 
-    for problem in unique_problems:
+    for problem_name in unique_problem_names:
         for author in unique_authors:
             # If this author hasn't attempted this problem,
             # create fake testruns with 'Solution Missing' result.
             if not any(
-                testrun.solution.author == author and testrun.solution.problem.name == problem
+                testrun.solution.author == author and testrun.solution.problem.name == problem_name
                 for testrun in testruns
             ):
-                problem_obj = next(
+                problem = next(
                     testrun.solution.problem
                     for testrun in testruns
-                    if testrun.solution.problem.name == problem
+                    if testrun.solution.problem.name == problem_name
                 )
-                solution = Solution(problem_obj, author, None)
+                solution = Solution(problem, author, None)
 
-                for testcase in problem_obj.testcases:
+                for testcase in problem.testcases:
                     fake_testrun = TestRun(
-                        solution,
-                        testcase,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
+                        solution=solution,
+                        testcase=testcase,
+                        output_dir=None,
+                        answer_filename=None,
+                        compiler_output_filename=None,
+                        stdout_filename=None,
+                        stderr_filename=None,
                         result=TestRunSolutionMissingResult(),
                     )
                     fake_testrun.record_judge_start_time()
@@ -292,7 +293,7 @@ def fill_testruns_for_missing_solutions(testruns: list[TestRun]) -> list[TestRun
     return padded_testruns
 
 
-def generate_reports(config: GraderConfig, testruns: list[TestRun]) -> None:
+def _generate_reports(config: GraderConfig, testruns: list[TestRun]) -> None:
     """Generate all report files."""
     report_output_path = Path(config.report_output_dir)
 
