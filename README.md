@@ -1,5 +1,7 @@
 # Hammurabi
 
+_**Note**: This is a pet project I wrote about a decade ago. I’ve recently used it as a refactoring playground for agentic AI coding assistants, which turned out surprisingly well._
+
 An automated judge for algorithmic programming contests. Strict, but fair.
 
 Hammurabi discovers, compiles, and runs solutions in multiple programming languages. It detects compilation and runtime errors, validates output, enforces time limits, and generates HTML reports with detailed logs and statistics.
