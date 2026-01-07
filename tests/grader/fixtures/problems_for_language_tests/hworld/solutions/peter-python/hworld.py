@@ -1,4 +1,3 @@
-import os
 import sys
 
 
@@ -23,7 +22,7 @@ def solve(count):
 
 def write_output(filename, lines):
     with open(filename, "w") as output_file:
-        output_file.write(os.linesep.join(lines))
+        output_file.write("\n".join(lines))
 
 
 if __name__ == "__main__":

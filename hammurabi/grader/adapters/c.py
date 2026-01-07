@@ -10,6 +10,9 @@ from hammurabi.grader.adapters.base import BaseSolutionAdapter
 from hammurabi.grader.model import Solution
 from hammurabi.grader.model import TestRun
 
+if platform.system() == "Windows":
+    from hammurabi.grader.adapters import windows_toolchain
+
 
 class CSolutionAdapter(BaseSolutionAdapter):
     """Adapter for running C solutions."""
@@ -21,8 +24,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
     def describe() -> None:
         """Print C compiler version information."""
         if platform.system() == "Windows":
-            # Just use C++ compiler on Windows.
-            subprocess.call("vsvars32.bat & cl", shell=True)
+            windows_toolchain.print_compiler_version()
         else:
             subprocess.call("LC_ALL=C LANG=C gcc --version", shell=True)
 
@@ -36,12 +38,15 @@ class CSolutionAdapter(BaseSolutionAdapter):
 
     def get_compile_command_line(self, testrun: TestRun) -> str:
         """Return the command to compile C source files."""
-        c_sources = " ".join([f'"{file}"' for file in self.get_source_files()])
         executable_filename = self._get_executable_filename(testrun)
 
         if platform.system() == "Windows":
-            return f'vsvars32.bat & cl /Ox /EHsc {c_sources} /link /out:"{executable_filename}"'
+            return windows_toolchain.build_c_compile_command(
+                sources=list(self.get_source_files()),
+                output_path=executable_filename,
+            )
         else:
+            c_sources = " ".join([f'"{file}"' for file in self.get_source_files()])
             # LANG=C forces gcc to use ASCII instead of UTF-8,
             # so reports don't break when locale is set to UTF-8.
             return f'LC_ALL=C LANG=C gcc --std=c99 -O2 {c_sources} -o "{executable_filename}"'

@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from hammurabi.utils import fileio
@@ -12,7 +10,8 @@ def sample_file_path_for_reading(tmpdir):
     file_path = tmpdir.join("sample_read_file.txt")
     filename = file_path.strpath
 
-    content_to_write = os.linesep.join(sample_file_lines)
+    # Use `\n` for line endings, text mode handles platform-specific translation.
+    content_to_write = "\n".join(sample_file_lines)
     with open(filename, "w", encoding="utf-8") as sample_file:
         sample_file.write(content_to_write)
 
@@ -36,7 +35,8 @@ def test_read_entire_file_reads_all_lines(sample_file_path_for_reading):
 
 def test_write_entire_file_reads_same_content(sample_file_path_for_writing):
     # Arrange
-    content_to_write = os.linesep.join(sample_file_lines)
+    # Use `\n` for line endings, text mode handles platform-specific translation.
+    content_to_write = "\n".join(sample_file_lines)
 
     # Act
     fileio.write_entire_file(sample_file_path_for_writing, content_to_write)

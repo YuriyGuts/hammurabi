@@ -32,6 +32,75 @@ Or install as a package:
 uv pip install .
 ```
 
+## Language Toolchain Setup
+
+Hammurabi requires compilers and interpreters for each language you want to judge. Below are the recommended minimal installations for each platform.
+
+### Quick Setup
+
+#### Windows (using winget)
+
+```cmd
+winget install Microsoft.DotNet.SDK.9          # C#
+winget install EclipseAdoptium.Temurin.21.JDK  # Java
+winget install OpenJS.NodeJS.LTS               # JavaScript
+winget install Python.Python.3.12              # Python
+winget install RubyInstallerTeam.Ruby.3.3      # Ruby
+```
+
+For C/C++, choose one:
+```cmd
+# Option A: MinGW-w64 via MSYS2 (recommended, lighter)
+# Download from https://www.msys2.org/, then:
+pacman -S mingw-w64-ucrt-x86_64-gcc
+# Add C:\msys64\ucrt64\bin to PATH
+
+# Option B: Visual Studio Build Tools
+winget install Microsoft.VisualStudio.2022.BuildTools --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive"
+```
+
+#### macOS (using Homebrew)
+
+```bash
+xcode-select --install  # C/C++ (clang)
+brew install dotnet-sdk # C#
+brew install openjdk    # Java
+brew install node       # JavaScript
+brew install python     # Python
+brew install ruby       # Ruby
+```
+
+#### Linux (Debian/Ubuntu)
+
+```bash
+sudo apt update
+sudo apt install build-essential  # C/C++ (gcc/g++)
+sudo apt install dotnet-sdk-9.0   # C#
+sudo apt install default-jdk      # Java
+sudo apt install nodejs npm       # JavaScript
+sudo apt install python3          # Python
+sudo apt install ruby             # Ruby
+```
+
+#### Linux (Fedora)
+
+```bash
+sudo dnf install gcc gcc-c++      # C/C++
+sudo dnf install dotnet-sdk-9.0   # C#
+sudo dnf install java-21-openjdk-devel  # Java
+sudo dnf install nodejs npm       # JavaScript
+sudo dnf install python3          # Python
+sudo dnf install ruby             # Ruby
+```
+
+### Verify Installation
+
+Run `hammurabi languages` to check which compilers/interpreters are detected:
+
+```bash
+hammurabi languages
+```
+
 ## Usage
 
 ### Grading Solutions
