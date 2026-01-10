@@ -69,7 +69,9 @@ class TestSubprocessSolutionRunner:
         runner = SubprocessSolutionRunner()
         cmd = f"{sys.executable} -c \"print('hello')\""
 
-        exit_code = runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        exit_code = runner.run_command_with_time_and_ram_limits(
+            sample_testrun, cmd, timeout_sec=5.0
+        )
 
         assert exit_code == 0
 
@@ -80,7 +82,7 @@ class TestSubprocessSolutionRunner:
         runner = SubprocessSolutionRunner()
         cmd = f"{sys.executable} -c \"print('hello world')\""
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         assert sample_testrun.stdout_filename is not None
         stdout_content = Path(sample_testrun.stdout_filename).read_text()
@@ -93,7 +95,7 @@ class TestSubprocessSolutionRunner:
         runner = SubprocessSolutionRunner()
         cmd = f"{sys.executable} -c \"import sys; sys.stderr.write('error message')\""
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         assert sample_testrun.stderr_filename is not None
         stderr_content = Path(sample_testrun.stderr_filename).read_text()
@@ -106,7 +108,7 @@ class TestSubprocessSolutionRunner:
         runner = SubprocessSolutionRunner()
         cmd = f'{sys.executable} -c "pass"'
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         assert sample_testrun.lean_start_time is not None
         assert sample_testrun.lean_end_time is not None
@@ -121,7 +123,7 @@ class TestSubprocessSolutionRunner:
         cmd = f'{sys.executable} -c "import time; time.sleep(10)"'
 
         with pytest.raises(SubprocessTimeoutError) as exc_info:
-            runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=0.1)
+            runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=0.1)
 
         assert exc_info.value.timeout == 0.1
         assert "killed after" in str(exc_info.value)
@@ -133,7 +135,9 @@ class TestSubprocessSolutionRunner:
         runner = SubprocessSolutionRunner()
         cmd = f'{sys.executable} -c "exit(42)"'
 
-        exit_code = runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        exit_code = runner.run_command_with_time_and_ram_limits(
+            sample_testrun, cmd, timeout_sec=5.0
+        )
 
         assert exit_code == 42
 
@@ -210,7 +214,7 @@ class TestSubprocessTimeoutBehavior:
         cmd = f'{sys.executable} -c "import time; time.sleep(100)"'
 
         with pytest.raises(SubprocessTimeoutError):
-            runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=0.2)
+            runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=0.2)
 
         # Test passes if no orphan processes are left hanging
         # (verified by the test completing without hanging)
@@ -220,7 +224,9 @@ class TestSubprocessTimeoutBehavior:
         runner = SubprocessSolutionRunner()
         cmd = f"{sys.executable} -c \"print('fast')\""
 
-        exit_code = runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        exit_code = runner.run_command_with_time_and_ram_limits(
+            sample_testrun, cmd, timeout_sec=5.0
+        )
 
         assert exit_code == 0
 
@@ -229,7 +235,7 @@ class TestSubprocessTimeoutBehavior:
         runner = SubprocessSolutionRunner()
         cmd = f'{sys.executable} -c "import time; time.sleep(0.1)"'
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         elapsed = sample_testrun.get_lean_elapsed_milliseconds()
         # Should be at least 100ms (the sleep time)
@@ -249,7 +255,7 @@ class TestCommandExecution:
         # Command that reads the marker file (proving we're in the right directory)
         cmd = f"{sys.executable} -c \"print(open('marker.txt').read())\""
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         assert sample_testrun.stdout_filename is not None
         stdout_content = Path(sample_testrun.stdout_filename).read_text()
@@ -260,7 +266,7 @@ class TestCommandExecution:
         runner = SubprocessSolutionRunner()
         cmd = f'{sys.executable} -c "import sys; print(sys.argv)" arg1 arg2'
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         assert sample_testrun.stdout_filename is not None
         stdout_content = Path(sample_testrun.stdout_filename).read_text()
@@ -272,7 +278,7 @@ class TestCommandExecution:
         runner = SubprocessSolutionRunner()
         cmd = f'echo hello | {sys.executable} -c "import sys; print(sys.stdin.read().strip())"'
 
-        runner.run_command_with_timeout(sample_testrun, cmd, timeout_sec=5.0)
+        runner.run_command_with_time_and_ram_limits(sample_testrun, cmd, timeout_sec=5.0)
 
         assert sample_testrun.stdout_filename is not None
         stdout_content = Path(sample_testrun.stdout_filename).read_text()

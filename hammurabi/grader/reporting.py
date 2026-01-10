@@ -17,6 +17,7 @@ from hammurabi.grader.model import TestRunCompilationErrorResult
 from hammurabi.grader.model import TestRunCorrectAnswerResult
 from hammurabi.grader.model import TestRunFormatErrorResult
 from hammurabi.grader.model import TestRunInternalErrorResult
+from hammurabi.grader.model import TestRunMemoryExceededResult
 from hammurabi.grader.model import TestRunResult
 from hammurabi.grader.model import TestRunRuntimeErrorResult
 from hammurabi.grader.model import TestRunSolutionMissingResult
@@ -106,6 +107,7 @@ def generate_matrix_report_html(testruns: list[TestRun], filename: str) -> None:
         TestRunCorrectAnswerResult(),
         TestRunWrongAnswerResult(),
         TestRunTimeoutResult(timeout=0),
+        TestRunMemoryExceededResult(memory_limit_mb=0),
         TestRunRuntimeErrorResult(message=None),
         TestRunFormatErrorResult(message=""),
         TestRunCompilationErrorResult(message=None),
@@ -233,6 +235,7 @@ def get_contextual_style_by_result(testrun_result: TestRunResult) -> str:
         TestRunCorrectAnswerResult: "success",
         TestRunFormatErrorResult: "warning",
         TestRunInternalErrorResult: "warning",
+        TestRunMemoryExceededResult: "info",
         TestRunRuntimeErrorResult: "warning",
         TestRunSolutionMissingResult: "warning",
         TestRunTimeoutResult: "info",

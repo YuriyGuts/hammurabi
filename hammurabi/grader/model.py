@@ -269,7 +269,7 @@ class TestRunSolutionMissingResult(TestRunResult):
     # Prevent pytest from collecting this class as a test case.
     __test__ = False
 
-    status_code: str = field(default="M", init=False)
+    status_code: str = field(default="N", init=False)
     status: str = field(default="Solution Missing", init=False)
 
 
@@ -303,6 +303,28 @@ class TestRunTimeoutResult(TestRunResult):
     def format_details(self) -> str | None:
         """Return a message about the timeout limit exceeded."""
         return f"Execution time exceeded the limit of {self.timeout:.2g} seconds"
+
+
+@dataclass
+class TestRunMemoryExceededResult(TestRunResult):
+    """Result indicating the solution exceeded the memory limit."""
+
+    # Prevent pytest from collecting this class as a test case.
+    __test__ = False
+
+    memory_limit_mb: int
+    peak_memory_mb: int | None = None
+    status_code: str = field(default="M", init=False)
+    status: str = field(default="Memory Limit Exceeded", init=False)
+
+    def format_details(self) -> str | None:
+        """Return a message about the memory limit exceeded."""
+        if self.peak_memory_mb is not None:
+            return (
+                f"Memory peak {self.peak_memory_mb} MB "
+                f"exceeded the limit of {self.memory_limit_mb} MB"
+            )
+        return f"Memory limit of {self.memory_limit_mb} MB exceeded"
 
 
 @dataclass

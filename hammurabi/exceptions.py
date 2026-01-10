@@ -14,6 +14,17 @@ class SubprocessTimeoutError(Exception):
         self.exit_code = exit_code
 
 
+class SubprocessMemoryLimitError(Exception):
+    """Raised when a subprocess exceeds its memory limit."""
+
+    def __init__(
+        self, message: str, memory_limit_mb: int, peak_memory_mb: int | None = None
+    ) -> None:
+        super().__init__(message)
+        self.memory_limit_mb = memory_limit_mb
+        self.peak_memory_mb = peak_memory_mb
+
+
 class TestRunPrematureTerminationError(Exception):
     """Raised when a test run terminates before producing output."""
 

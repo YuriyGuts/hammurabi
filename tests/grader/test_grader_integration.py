@@ -68,7 +68,7 @@ class TestGraderIntegration:
             "cindy-c": "E",
             "jane-java-e": "E",
             "john-js-r": "R",
-            "peter-python-m": "M",
+            "peter-python-m": "N",
             "rose-ruby-f": "F",
         }
 
