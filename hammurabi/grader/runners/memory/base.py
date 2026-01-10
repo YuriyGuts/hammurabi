@@ -12,9 +12,8 @@ class BaseMemoryLimiter(ABC):
     """Abstract base class for memory limit enforcement.
 
     Platform-specific implementations use different mechanisms:
-    * Linux: `resource.setrlimit(RLIMIT_AS) via preexec_fn
-    * Windows: Job Objects with memory limits
-    * macOS/fallback: psutil polling
+    * Linux: `resource.setrlimit(RLIMIT_AS)` via `preexec_fn`
+    * macOS/Windows/fallback: `psutil` polling
     """
 
     def __init__(self, memory_limit_mb: int) -> None:
@@ -31,9 +30,9 @@ class BaseMemoryLimiter(ABC):
 
     @abstractmethod
     def get_preexec_fn(self) -> Callable[[], None] | None:
-        """Return a function to be called in the subprocess before exec.
+        """Return a function to be called in the subprocess before `exec`.
 
-        Used for Linux setrlimit. Returns None on platforms that don't support it.
+        Used for Linux `setrlimit`. Returns `None` on platforms that don't support it.
 
         Returns
         -------

@@ -95,6 +95,7 @@ class TestCreateMemoryLimiter:
 
         assert isinstance(limiter, PollingMemoryLimiter)
 
+    @pytest.mark.skipif(platform.system() != "Linux", reason="Linux only")
     def test_creates_linux_limiter_on_linux(self, monkeypatch: pytest.MonkeyPatch):
         """Should create LinuxMemoryLimiter on Linux."""
         monkeypatch.setattr(platform, "system", lambda: "Linux")
@@ -232,6 +233,7 @@ class TestPollingMemoryLimiter:
         assert limiter.get_peak_memory_mb() is None
 
 
+@pytest.mark.skipif(platform.system() != "Linux", reason="Linux only")
 class TestLinuxMemoryLimiter:
     """Tests for the LinuxMemoryLimiter class."""
 
@@ -273,7 +275,6 @@ class TestLinuxMemoryLimiter:
         # Should not raise
         limiter.stop_monitoring()
 
-    @pytest.mark.skipif(platform.system() != "Linux", reason="Linux only")
     def test_preexec_fn_sets_rlimit(self):
         """preexec_fn should set RLIMIT_AS on Linux."""
         import resource  # noqa: PLC0415
@@ -296,6 +297,14 @@ class TestLinuxMemoryLimiter:
 class TestWindowsMemoryLimiter:
     """Tests for the WindowsMemoryLimiter class."""
 
+    def test_inherits_from_polling_limiter(self):
+        """Windows limiter should inherit from PollingMemoryLimiter."""
+        from hammurabi.grader.runners.memory.windows import WindowsMemoryLimiter  # noqa: PLC0415
+
+        limiter = WindowsMemoryLimiter(512)
+
+        assert isinstance(limiter, PollingMemoryLimiter)
+
     def test_get_preexec_fn_returns_none(self):
         """Windows limiter should not use preexec_fn."""
         from hammurabi.grader.runners.memory.windows import WindowsMemoryLimiter  # noqa: PLC0415
@@ -304,31 +313,8 @@ class TestWindowsMemoryLimiter:
 
         assert limiter.get_preexec_fn() is None
 
-    def test_start_monitoring_is_noop(self):
-        """start_monitoring should be a no-op on Windows."""
-        from hammurabi.grader.runners.memory.windows import WindowsMemoryLimiter  # noqa: PLC0415
-
-        limiter = WindowsMemoryLimiter(512)
-        mock_proc = mock.MagicMock(spec=subprocess.Popen)
-
-        # Should not raise
-        limiter.start_monitoring(mock_proc, lambda: None)
-
-    def test_stop_monitoring_cleans_up_handle(self):
-        """stop_monitoring should clean up the job handle."""
-        from hammurabi.grader.runners.memory.windows import WindowsMemoryLimiter  # noqa: PLC0415
-
-        limiter = WindowsMemoryLimiter(512)
-        limiter._job_handle = 12345  # Fake handle
-
-        # Mock the windll to avoid actual Windows API calls
-        with mock.patch("ctypes.windll", create=True):
-            limiter.stop_monitoring()
-
-        assert limiter._job_handle is None
-
-    def test_stop_monitoring_without_handle_is_safe(self):
-        """stop_monitoring should be safe when no handle exists."""
+    def test_stop_monitoring_is_safe(self):
+        """stop_monitoring should be safe to call."""
         from hammurabi.grader.runners.memory.windows import WindowsMemoryLimiter  # noqa: PLC0415
 
         limiter = WindowsMemoryLimiter(512)

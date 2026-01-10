@@ -13,13 +13,14 @@ from hammurabi.grader.runners.memory.base import BaseMemoryLimiter
 
 
 class PollingMemoryLimiter(BaseMemoryLimiter):
-    """Memory limiter using periodic polling via psutil.
+    """Memory limiter using periodic polling via `psutil`.
 
     This is the fallback implementation for macOS and other platforms
     where OS-level memory enforcement is unreliable.
     """
 
-    POLL_INTERVAL_SECONDS = 0.05  # 50ms polling interval
+    # 50ms polling interval.
+    POLL_INTERVAL_SECONDS = 0.05
 
     def __init__(self, memory_limit_mb: int) -> None:
         """Initialize the polling memory limiter."""
@@ -42,7 +43,7 @@ class PollingMemoryLimiter(BaseMemoryLimiter):
         proc
             The subprocess to monitor.
         on_exceeded
-            Callback to invoke when memory limit is exceeded.
+            Callback to invoke when the memory limit is exceeded.
         """
         self._stop_event.clear()
 
