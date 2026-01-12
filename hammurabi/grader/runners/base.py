@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from hammurabi.grader.model import TestRun
 
 
@@ -11,6 +13,6 @@ class BaseSolutionRunner:
     def __init__(self) -> None:
         pass
 
-    def run(self, testrun: TestRun, cmd: str) -> None:
+    def run(self, testrun: TestRun, cmd: Sequence[str]) -> None:
         """Run a solution command for a test run."""
         pass

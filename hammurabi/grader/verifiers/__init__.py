@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import logging
 from pathlib import Path
 
 from hammurabi.grader.verifiers.common import AnswerVerifier
@@ -66,6 +67,7 @@ def load_custom_verifiers(verifiers_dir: Path) -> None:
         try:
             spec.loader.exec_module(module)
         except Exception:
+            logging.warning("Failed to load custom verifier from %s", module_path, exc_info=True)
             continue
 
         for name, obj in inspect.getmembers(module, inspect.isclass):

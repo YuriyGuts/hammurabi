@@ -332,7 +332,7 @@ class TestMemoryLimitIntegration:
         sample_testrun.memory_limit = 512
         sample_testrun.solution.problem.config.limits.time.python = 5.0
 
-        cmd = f"{sys.executable} -c \"print('ok')\""
+        cmd = [sys.executable, "-c", "print('ok')"]
 
         # Should not raise
         runner.run(sample_testrun, cmd)
@@ -345,7 +345,7 @@ class TestMemoryLimitIntegration:
         sample_testrun.memory_limit = None
         sample_testrun.solution.problem.config.limits.time.python = 5.0
 
-        cmd = f"{sys.executable} -c \"print('ok')\""
+        cmd = [sys.executable, "-c", "print('ok')"]
 
         # Should not raise - uses default 512MB limit
         runner.run(sample_testrun, cmd)
@@ -359,7 +359,7 @@ class TestMemoryLimitIntegration:
         sample_testrun.solution.problem.config.limits.time.python = 10.0
 
         # Allocate more than 5MB
-        cmd = f'{sys.executable} -c "x = bytearray(50 * 1024 * 1024); import time; time.sleep(5)"'
+        cmd = [sys.executable, "-c", "x = bytearray(50 * 1024 * 1024); import time; time.sleep(5)"]
 
         with pytest.raises(TestRunPrematureTerminationError) as exc_info:
             runner.run(sample_testrun, cmd)

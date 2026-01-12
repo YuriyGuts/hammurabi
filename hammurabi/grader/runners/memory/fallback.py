@@ -78,7 +78,7 @@ class PollingMemoryLimiter(BaseMemoryLimiter):
         """Stop the monitoring thread."""
         self._stop_event.set()
         if self._monitor_thread is not None:
-            self._monitor_thread.join(timeout=1.0)
+            self._monitor_thread.join(timeout=5.0)
             self._monitor_thread = None
 
     def _get_total_memory_bytes(self, process: psutil.Process) -> int:

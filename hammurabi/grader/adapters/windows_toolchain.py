@@ -118,8 +118,8 @@ def detect_toolchain() -> ToolchainConfig | None:
     """Detect available C/C++ toolchain on Windows.
 
     Returns the first available toolchain in order of preference:
-    1. MinGW-w64 (GCC) - simpler, same commands as Linux
-    2. MSVC (Visual Studio Build Tools) - Microsoft's official compiler
+    1. MinGW-w64 (GCC) - simpler, same commands as Linux.
+    2. MSVC (Visual Studio Build Tools) - Microsoft's official compiler.
 
     Returns `None` if no toolchain is available.
     """
@@ -166,6 +166,42 @@ def get_toolchain_description() -> str:
         return "Microsoft Visual C++ (MSVC)"
 
 
+@lru_cache(maxsize=1)
+def _get_msvc_env() -> dict[str, str] | None:
+    """Get environment variables set by vcvarsall.bat for MSVC compilation.
+
+    Returns the environment dict or None if MSVC is not available.
+    """
+    vcvarsall = _find_vcvarsall()
+    if not vcvarsall:
+        return None
+
+    try:
+        # Run `vcvarsall` and capture the resulting environment.
+        # We use `set` to dump all environment variables after setup.
+        result = subprocess.run(
+            f'"{vcvarsall}" x64 >nul 2>&1 && set',
+            shell=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        if result.returncode != 0:
+            return None
+
+        # Parse the environment variables from output.
+        env = {}
+        for line in result.stdout.splitlines():
+            if "=" in line:
+                key, _, value = line.partition("=")
+                env[key] = value
+        return env
+
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+
+
 def print_compiler_version() -> None:
     """Print the version information of the detected compiler."""
     config = detect_toolchain()
@@ -179,15 +215,15 @@ def print_compiler_version() -> None:
         return
 
     if config.toolchain == WindowsToolchain.MINGW:
-        subprocess.call("gcc --version", shell=True)
+        subprocess.call(["gcc", "--version"])
     else:
-        # For MSVC, we need to set up the environment first
-        vcvarsall = _find_vcvarsall()
-        if vcvarsall:
-            subprocess.call(f'"{vcvarsall}" x64 >nul 2>&1 && cl', shell=True)
+        # For MSVC, we need to set up the environment first.
+        msvc_env = _get_msvc_env()
+        if msvc_env:
+            subprocess.call(["cl"], env=msvc_env)
 
 
-def build_c_compile_command(sources: list[str], output_path: str) -> str:
+def build_c_compile_command(sources: list[str], output_path: str) -> list[str]:
     """
     Build the C compilation command for Windows.
 
@@ -200,20 +236,17 @@ def build_c_compile_command(sources: list[str], output_path: str) -> str:
     if config is None:
         raise RuntimeError("No C/C++ toolchain available on Windows")
 
-    quoted_sources = " ".join([f'"{s}"' for s in sources])
-    flags = " ".join(config.c_flags)
-    out_flag = config.link_output_flag
-
     if config.toolchain == WindowsToolchain.MINGW:
-        return f'{config.c_compiler} {flags} {quoted_sources} {out_flag} "{output_path}"'
+        cmd = [config.c_compiler, *config.c_flags, *sources]
+        cmd.extend([config.link_output_flag, output_path])
     else:
-        # MSVC command with environment setup.
-        prefix = config.compile_prefix
-        compiler = config.c_compiler
-        return f'{prefix} {compiler} {flags} {quoted_sources} {out_flag}"{output_path}"'
+        # MSVC: `<compiler> <flags> <sources> /Fe:<output>`.
+        cmd = [config.c_compiler, *config.c_flags, *sources]
+        cmd.append(f"{config.link_output_flag}{output_path}")
+    return cmd
 
 
-def build_cpp_compile_command(sources: list[str], output_path: str) -> str:
+def build_cpp_compile_command(sources: list[str], output_path: str) -> list[str]:
     """
     Build the C++ compilation command for Windows.
 
@@ -226,14 +259,27 @@ def build_cpp_compile_command(sources: list[str], output_path: str) -> str:
     if config is None:
         raise RuntimeError("No C/C++ toolchain available on Windows")
 
-    quoted_sources = " ".join([f'"{s}"' for s in sources])
-    flags = " ".join(config.cpp_flags)
-    out_flag = config.link_output_flag
-
     if config.toolchain == WindowsToolchain.MINGW:
-        return f'{config.cpp_compiler} {flags} {quoted_sources} {out_flag} "{output_path}"'
+        cmd = [config.cpp_compiler, *config.cpp_flags, *sources]
+        cmd.extend([config.link_output_flag, output_path])
     else:
-        # MSVC command with environment setup.
-        prefix = config.compile_prefix
-        compiler = config.cpp_compiler
-        return f'{prefix} {compiler} {flags} {quoted_sources} {out_flag}"{output_path}"'
+        # MSVC: `<compiler> <flags> <sources> /Fe:<output>`.
+        cmd = [config.cpp_compiler, *config.cpp_flags, *sources]
+        cmd.append(f"{config.link_output_flag}{output_path}")
+    return cmd
+
+
+def get_compile_env() -> dict[str, str] | None:
+    """Get environment variables needed for compilation.
+
+    For MSVC, this returns the environment from vcvarsall.bat.
+    For MinGW, returns None (inherit current environment).
+    """
+    config = detect_toolchain()
+    if config is None:
+        return None
+
+    if config.toolchain == WindowsToolchain.MSVC:
+        return _get_msvc_env()
+
+    return None

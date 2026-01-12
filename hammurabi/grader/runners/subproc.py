@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import subprocess
 import threading
+from collections.abc import Sequence
 
 import psutil
 
@@ -24,7 +25,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
     def __init__(self) -> None:
         super().__init__()
 
-    def run(self, testrun: TestRun, cmd: str) -> None:
+    def run(self, testrun: TestRun, cmd: Sequence[str]) -> None:
         """Run the command with time and memory limit enforcement."""
         config = testrun.solution.problem.config
         time_limit = config.limits.time.get_for_language(testrun.solution.language)
@@ -44,7 +45,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
             raise TestRunPrematureTerminationError(result) from e
 
     def run_command_with_time_and_ram_limits(
-        self, testrun: TestRun, cmd: str, timeout_sec: float
+        self, testrun: TestRun, cmd: Sequence[str], timeout_sec: float
     ) -> int | None:
         """
         Execute a command in a subprocess with timeout and memory limit enforcement.
@@ -72,6 +73,8 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
         """
         timeout_occurred = threading.Event()
         memory_exceeded = threading.Event()
+        kill_lock = threading.Lock()
+        process_killed = threading.Event()
 
         # Get memory limit from testrun (default 512 MB)
         memory_limit_mb = testrun.memory_limit or 512
@@ -82,11 +85,16 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
                 process.kill()
 
         def kill_process_tree() -> None:
-            with contextlib.suppress(psutil.NoSuchProcess):
-                process = psutil.Process(proc.pid)
-                for child_process in process.children(recursive=True):
-                    do_kill_process(child_process)
-                do_kill_process(process)
+            # Use lock to prevent concurrent termination attempts.
+            with kill_lock:
+                if process_killed.is_set():
+                    return
+                process_killed.set()
+                with contextlib.suppress(psutil.NoSuchProcess):
+                    process = psutil.Process(proc.pid)
+                    for child_process in process.children(recursive=True):
+                        do_kill_process(child_process)
+                    do_kill_process(process)
 
         def timeout_handler() -> None:
             timeout_occurred.set()
@@ -111,7 +119,7 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
 
             proc = subprocess.Popen(
                 cmd,
-                shell=True,
+                shell=False,
                 cwd=testrun.solution.root_dir,
                 stdout=stdout,
                 stderr=stderr,
@@ -129,13 +137,14 @@ class SubprocessSolutionRunner(BaseSolutionRunner):
             timer.daemon = True
             timer.start()
 
-            proc.communicate()
+            try:
+                proc.communicate()
+            finally:
+                # Ensure cleanup always runs even if communicate() raises
+                timer.cancel()
+                memory_limiter.stop_monitoring()
 
             testrun.record_lean_end_time()
-
-            # Stop monitoring and cancel the timer.
-            timer.cancel()
-            memory_limiter.stop_monitoring()
 
             # Check for memory exceeded (check first since it may have triggered).
             if memory_exceeded.is_set():

@@ -26,7 +26,7 @@ class CppSolutionAdapter(BaseSolutionAdapter):
         if platform.system() == "Windows":
             windows_toolchain.print_compiler_version()
         else:
-            subprocess.call("g++ --version", shell=True)
+            subprocess.call(["g++", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""
@@ -36,7 +36,7 @@ class CppSolutionAdapter(BaseSolutionAdapter):
         """Return file extensions for C++ source files."""
         return [".cpp"]
 
-    def get_compile_command_line(self, testrun: TestRun) -> str:
+    def get_compile_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to compile C++ source files."""
         executable_filename = self._get_executable_filename(testrun)
 
@@ -46,8 +46,18 @@ class CppSolutionAdapter(BaseSolutionAdapter):
                 output_path=executable_filename,
             )
         else:
-            cpp_sources = " ".join([f'"{file}"' for file in self.get_source_files()])
-            return f'g++ -std=c++11 -O3 {cpp_sources} -o "{executable_filename}"'
+            # Build argument list: g++ -std=c++11 -O3 <sources> -o <output>
+            cmd = ["g++", "-std=c++11", "-O3"]
+            cmd.extend(self.get_source_files())
+            cmd.extend(["-o", executable_filename])
+            return cmd
+
+    def get_compile_env(self) -> dict[str, str] | None:
+        """Return environment for compilation."""
+        if platform.system() == "Windows":
+            # Use MSVC environment if needed.
+            return windows_toolchain.get_compile_env()
+        return None
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to execute the compiled program."""

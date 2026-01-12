@@ -79,13 +79,20 @@ class BaseSolutionAdapter:
         if compile_cmd is not None:
             assert testrun.compiler_output_filename is not None
             with open(testrun.compiler_output_filename, "w", encoding="utf-8") as compiler_output:
-                exit_code = subprocess.call(
-                    compile_cmd,
-                    shell=True,
-                    cwd=solution.root_dir,
-                    stdout=compiler_output,
-                    stderr=compiler_output,
-                )
+                try:
+                    exit_code = subprocess.call(
+                        compile_cmd,
+                        shell=False,
+                        cwd=solution.root_dir,
+                        stdout=compiler_output,
+                        stderr=compiler_output,
+                        env=self.get_compile_env(),
+                        timeout=60,
+                    )
+                except subprocess.TimeoutExpired:
+                    msg = "Compilation timed out after 60 seconds"
+                    result = TestRunCompilationErrorResult(message=msg)
+                    raise TestRunPrematureTerminationError(result) from None
 
             if exit_code != 0:
                 compiler_output_text = fileio.read_entire_file(testrun.compiler_output_filename)
@@ -94,8 +101,12 @@ class BaseSolutionAdapter:
 
         self.is_compiled = True
 
-    def get_compile_command_line(self, testrun: TestRun) -> str | None:
-        """Return the compilation command, or None if not needed."""
+    def get_compile_command_line(self, testrun: TestRun) -> list[str] | None:
+        """Return the compilation command as an argument list, or None if not needed."""
+        return None
+
+    def get_compile_env(self) -> dict[str, str] | None:
+        """Return environment variables for compilation, or None to inherit."""
         return None
 
     def get_entry_point_file(self) -> str | None:
@@ -143,13 +154,10 @@ class BaseSolutionAdapter:
         )
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
-        """Return the command to run the solution."""
+        """Return the command to run the solution as an argument list."""
         solution = self._require_solution()
-        return [solution.language or "", f'"{self.get_entry_point_file()}"']
-
-    def get_run_command_line_string(self, testrun: TestRun) -> str:
-        """Return the command to run the solution as a string."""
-        return " ".join(self.get_run_command_line(testrun))
+        entry_point = self.get_entry_point_file()
+        return [solution.language or "", entry_point or ""]
 
     def create_testrun(self, testcase: TestCase) -> TestRun:
         """Create a TestRun instance for a test case."""
@@ -184,7 +192,7 @@ class BaseSolutionAdapter:
 
         try:
             self.supply_testcase(testrun.testcase)
-            cmd = self.get_run_command_line_string(testrun)
+            cmd = self.get_run_command_line(testrun)
             runner = self.create_runner(testrun, cmd)
             runner.run(testrun, cmd)
         finally:
@@ -192,7 +200,7 @@ class BaseSolutionAdapter:
 
         self.collect_output(testrun)
 
-    def create_runner(self, testrun: TestRun, cmd: str) -> BaseSolutionRunner:
+    def create_runner(self, testrun: TestRun, cmd: list[str]) -> BaseSolutionRunner:
         """Create the appropriate runner for the solution."""
         runner_name = testrun.solution.problem.config.runner.name
         runner_class = runners.registered_runners.get(runner_name)

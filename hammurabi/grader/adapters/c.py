@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import platform
 import subprocess
 from pathlib import Path
@@ -26,7 +27,8 @@ class CSolutionAdapter(BaseSolutionAdapter):
         if platform.system() == "Windows":
             windows_toolchain.print_compiler_version()
         else:
-            subprocess.call("LC_ALL=C LANG=C gcc --version", shell=True)
+            env = {**os.environ, "LC_ALL": "C", "LANG": "C"}
+            subprocess.call(["gcc", "--version"], env=env)
 
     def get_language_name(self) -> str:
         """Return the language identifier."""
@@ -36,7 +38,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
         """Return file extensions for C source files."""
         return [".c"]
 
-    def get_compile_command_line(self, testrun: TestRun) -> str:
+    def get_compile_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to compile C source files."""
         executable_filename = self._get_executable_filename(testrun)
 
@@ -46,10 +48,20 @@ class CSolutionAdapter(BaseSolutionAdapter):
                 output_path=executable_filename,
             )
         else:
-            c_sources = " ".join([f'"{file}"' for file in self.get_source_files()])
-            # LANG=C forces gcc to use ASCII instead of UTF-8,
-            # so reports don't break when locale is set to UTF-8.
-            return f'LC_ALL=C LANG=C gcc --std=c99 -O2 {c_sources} -o "{executable_filename}"'
+            # Build argument list: `gcc --std=c99 -O2 <sources> -o <output>`.
+            cmd = ["gcc", "--std=c99", "-O2"]
+            cmd.extend(self.get_source_files())
+            cmd.extend(["-o", executable_filename])
+            return cmd
+
+    def get_compile_env(self) -> dict[str, str] | None:
+        """Return environment for compilation."""
+        if platform.system() == "Windows":
+            # Use MSVC environment if needed.
+            return windows_toolchain.get_compile_env()
+        # LANG=C forces gcc to use ASCII instead of UTF-8,
+        # so reports don't break when locale is set to UTF-8.
+        return {**os.environ, "LC_ALL": "C", "LANG": "C"}
 
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to execute the compiled program."""

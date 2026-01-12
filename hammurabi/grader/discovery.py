@@ -127,11 +127,14 @@ def _discover_solutions(problem: Problem) -> list[Solution]:
             root_dir=str(solution_path),
         )
 
-        # Find all source files recursively
+        # Find all source files recursively, excluding symlinks that escape the solution directory
+        solution_path_resolved = solution_path.resolve()
         solution.files = sorted(
             str(f)
             for f in solution_path.rglob("*")
-            if f.is_file() and f.suffix in extension_to_language_map
+            if f.is_file()
+            and f.suffix in extension_to_language_map
+            and f.resolve().is_relative_to(solution_path_resolved)
         )
 
         solution.language = _detect_solution_language(solution)
@@ -145,8 +148,13 @@ def _detect_solution_language(solution: Solution) -> str | None:
     if solution.root_dir is None:
         return None
 
+    root_path = Path(solution.root_dir)
+    root_path_resolved = root_path.resolve()
     language_counts: dict[str, int] = {}
-    for file_path in Path(solution.root_dir).rglob("*"):
+    for file_path in root_path.rglob("*"):
+        # Skip symlinks that escape the solution directory.
+        if not file_path.resolve().is_relative_to(root_path_resolved):
+            continue
         if file_path.suffix in extension_to_language_map:
             for language in extension_to_language_map[file_path.suffix]:
                 language_counts[language] = language_counts.get(language, 0) + 1

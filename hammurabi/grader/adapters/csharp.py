@@ -24,7 +24,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print .NET SDK version information."""
-        subprocess.call("dotnet --version", shell=True)
+        subprocess.call(["dotnet", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""
@@ -34,7 +34,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         """Return file extensions for C# source files."""
         return [".cs"]
 
-    def get_compile_command_line(self, testrun: TestRun) -> str:
+    def get_compile_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to compile C# source files."""
         # Create a temporary .csproj file for dotnet build
         project_name = testrun.solution.problem.name
@@ -57,14 +57,14 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
         with open(csproj_path, "w", encoding="utf-8") as f:
             f.write(csproj_content)
 
-        # Return the build command
-        return f'cd "{project_dir}" && dotnet build "{csproj_path}" -c Release -o "{project_dir}"'
+        # Return the build command (cwd is set to solution.root_dir by the caller)
+        return ["dotnet", "build", str(csproj_path), "-c", "Release", "-o", str(project_dir)]
 
     def _detect_target_framework(self) -> str:
         """Detect the installed .NET SDK version and return the target framework."""
         try:
             version_output = subprocess.check_output(
-                ["dotnet", "--list-sdks"], universal_newlines=True
+                ["dotnet", "--list-sdks"], universal_newlines=True, timeout=10
             )
             # Parse the first SDK version (format: "10.0.101 [/path/to/sdk]")
             first_sdk = version_output.strip().split("\n")[0]

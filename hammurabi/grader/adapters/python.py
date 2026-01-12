@@ -18,7 +18,7 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Python interpreter version information."""
-        subprocess.call("python --version", shell=True)
+        subprocess.call(["python", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""
@@ -31,4 +31,4 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to execute the Python script."""
         entry_point_file = self.get_entry_point_file()
-        return ["python", f'"{entry_point_file}"']
+        return ["python", entry_point_file or ""]

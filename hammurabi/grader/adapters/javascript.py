@@ -18,7 +18,7 @@ class JavaScriptSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Node.js version information."""
-        subprocess.call("node --version", shell=True)
+        subprocess.call(["node", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""
@@ -31,4 +31,4 @@ class JavaScriptSolutionAdapter(BaseSolutionAdapter):
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to execute the JavaScript file."""
         entry_point_file = self.get_entry_point_file()
-        return ["node", f'"{entry_point_file}"']
+        return ["node", entry_point_file or ""]

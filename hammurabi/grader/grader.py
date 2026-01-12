@@ -144,7 +144,7 @@ def _get_report_root_dir(config: GraderConfig) -> str:
 def _get_report_output_dir(config: GraderConfig) -> str:
     """Create and return the output directory for this grading run."""
     dt = datetime.datetime.now()
-    hostname = socket.getfqdn()
+    hostname = socket.gethostname()
     template = config.locations.report_folder_template
     report_output_dir_name = template.format(dt=dt, hostname=hostname)
     report_output_path = Path(config.report_root_dir) / report_output_dir_name

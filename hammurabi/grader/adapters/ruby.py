@@ -18,7 +18,7 @@ class RubySolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Ruby interpreter version information."""
-        subprocess.call("ruby --version", shell=True)
+        subprocess.call(["ruby", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""
@@ -31,4 +31,4 @@ class RubySolutionAdapter(BaseSolutionAdapter):
     def get_run_command_line(self, testrun: TestRun) -> list[str]:
         """Return the command to execute the Ruby script."""
         entry_point_file = self.get_entry_point_file()
-        return ["ruby", f'"{entry_point_file}"']
+        return ["ruby", entry_point_file or ""]
