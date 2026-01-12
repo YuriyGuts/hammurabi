@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 import pytest
+import yaml
 
 from hammurabi.grader.config import GraderConfig
 from hammurabi.grader.discovery import discover_problems
@@ -68,9 +68,9 @@ class TestDiscoverProblems:
         author_dir.mkdir()
         (author_dir / "solution.py").write_text("print('hello')")
 
-        # Create problem.conf
+        # Create problem.yaml
         config = {"verifier": "AnswerVerifier"}
-        (problem_dir / "problem.conf").write_text(json.dumps(config))
+        (problem_dir / "problem.yaml").write_text(yaml.dump(config))
 
         return tmp_path
 
@@ -147,7 +147,7 @@ class TestDiscoverProblems:
             (problem_dir / "testcases").mkdir()
             (problem_dir / "answers").mkdir()
             (problem_dir / "solutions").mkdir()
-            (problem_dir / "problem.conf").write_text("{}")
+            (problem_dir / "problem.yaml").write_text("{}")
 
         grader_config.problem_root_dir = str(tmp_path)
 
@@ -169,9 +169,9 @@ class TestDiscoverProblems:
         self, grader_config: GraderConfig, problem_directory: Path
     ):
         """Problem config should be merged with grader config."""
-        # Update problem.conf with custom verifier
+        # Update problem.yaml with custom verifier
         config = {"verifier": "CustomVerifier"}
-        (problem_directory / "problem1" / "problem.conf").write_text(json.dumps(config))
+        (problem_directory / "problem1" / "problem.yaml").write_text(yaml.dump(config))
 
         grader_config.problem_root_dir = str(problem_directory)
 
@@ -184,7 +184,7 @@ class TestDiscoverProblems:
     ):
         """Test case scores from problem config should be applied."""
         config = {"testcase_score": {"01": 10, "02": 20}}
-        (problem_directory / "problem1" / "problem.conf").write_text(json.dumps(config))
+        (problem_directory / "problem1" / "problem.yaml").write_text(yaml.dump(config))
 
         grader_config.problem_root_dir = str(problem_directory)
 
@@ -237,3 +237,38 @@ class TestDiscoverProblems:
         tc = result[0].testcases[0]
         assert tc.input_filename.endswith("01.in")
         assert tc.correct_answer_filename.endswith("01.out")
+
+    def test_problem_without_config_uses_defaults(
+        self, grader_config: GraderConfig, tmp_path: Path
+    ):
+        """Problem without problem.yaml should use default configuration."""
+        # Create a problem directory WITHOUT problem.yaml
+        problem_dir = tmp_path / "no_config_problem"
+        problem_dir.mkdir()
+
+        testcases_dir = problem_dir / "testcases"
+        testcases_dir.mkdir()
+        (testcases_dir / "01.in").write_text("test input")
+
+        answers_dir = problem_dir / "answers"
+        answers_dir.mkdir()
+        (answers_dir / "01.out").write_text("test output")
+
+        solutions_dir = problem_dir / "solutions"
+        solutions_dir.mkdir()
+        author_dir = solutions_dir / "test_author"
+        author_dir.mkdir()
+        (author_dir / "solution.py").write_text("print('test')")
+
+        # No problem.yaml created!
+
+        grader_config.problem_root_dir = str(tmp_path)
+
+        result = discover_problems(grader_config)
+
+        assert len(result) == 1
+        assert result[0].name == "no_config_problem"
+        # Should use default verifier
+        assert result[0].config.verifier == "AnswerVerifier"
+        # Should use default memory limit
+        assert result[0].config.limits.memory == 512

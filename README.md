@@ -110,7 +110,7 @@ hammurabi grade [OPTIONS]
 ```
 
 Options:
-- `--conf FILE` - Use an alternative config file (default: `grader.conf`)
+- `--conf FILE` - Use an alternative config file (default: `hammurabi.yaml`)
 - `--problem NAME [NAME ...]` - Grade only specific problems
 - `--author NAME [NAME ...]` - Grade only specific authors' solutions
 - `--reference` - Run only the reference solution (to generate correct answers)
@@ -160,105 +160,106 @@ problems/
 |   |-- answers/
 |   |   |-- 01.out
 |   |   |-- 02.out
-|   |-- problem.conf
+|   |-- problem.yaml
 ```
 
 - **solutions/**: Each subdirectory is an author's solution. The `_reference` author is special and used to generate expected outputs.
 - **testcases/**: Input files with `.in` extension.
 - **answers/**: Expected output files with `.out` extension, matching test case names.
-- **problem.conf**: Optional problem-specific configuration (JSON).
+- **problem.yaml**: Optional problem-specific configuration.
 
 ## Configuration
 
-### grader.conf
+### hammurabi.yaml
 
-Main configuration file (JSON) with all available options and their defaults:
+The main configuration file. Place it in your project root directory. All relative paths are resolved from the directory containing this file.
 
-```json
-{
-  "locations": {
-    "problem_root": "grader/problems",
-    "report_root": "grader/reports",
-    "report_folder_template": "testrun-{dt:%Y%m%d-%H%M%S-%f}-{hostname}"
-  },
-  "limits": {
-    "memory": 512,
-    "time_limit_multiplier": 1.0,
-    "time": {
-      "c": 4.0,
-      "cpp": 4.0,
-      "csharp": 6.0,
-      "java": 8.0,
-      "javascript": 20.0,
-      "php": 18.0,
-      "python": 20.0,
-      "ruby": 20.0
-    }
-  },
-  "runner": {
-    "name": "SubprocessSolutionRunner",
-    "params": {}
-  },
-  "security": {
-    "report_stdout": true,
-    "report_stderr": true
-  },
-  "reporting": {
-    "alert_banner": "",
-    "warning_banner": "",
-    "info_banner": ""
-  }
-}
+```yaml
+# Hammurabi grader configuration.
+#
+# Place this file in your project root. All relative paths below are resolved
+# from the directory containing this file.
+
+locations:
+  # Directory containing your problem folders. Each subdirectory represents
+  # one problem and should contain solutions/, testcases/, and answers/ folders.
+  problem_root: problems
+
+  # Directory where grading reports will be generated. A new timestamped
+  # subfolder is created for each grading run.
+  report_root: reports
+
+  # Template for naming report subfolders. Available variables: {dt} for
+  # datetime and {hostname} for the machine name.
+  report_folder_template: "testrun-{dt:%Y%m%d-%H%M%S-%f}-{hostname}"
+
+security:
+  # Set to true to include the solution's standard output in reports.
+  report_stdout: true
+
+  # Set to true to include the solution's standard error in reports.
+  report_stderr: true
+
+runner:
+  # The solution runner implementation to use.
+  name: SubprocessSolutionRunner
+
+  # Additional parameters passed to the runner.
+  params: {}
+
+# The default execution constraints applied to each problem.
+# Can be overridden by problem-specific `problem.yaml` files.
+limits:
+  # Maximum memory allowed for each solution, in megabytes.
+  memory: 512
+
+  # The multiplier applied to all time limits.
+  # Can be useful for running existing configurations
+  # which were previously tested on faster/slower machines.
+  time_limit_multiplier: 1.0
+
+  # Maximum execution time per language, in seconds.
+  time:
+    c: 4.0
+    cpp: 4.0
+    csharp: 6.0
+    java: 8.0
+    javascript: 20.0
+    php: 18.0
+    python: 20.0
+    ruby: 20.0
+
+reporting:
+  # Optional banners displayed at the top of HTML reports. Can include HTML.
+  alert_banner: ""
+  warning_banner: ""
+  info_banner: ""
 ```
 
-#### Configuration Reference
+### problem.yaml
 
-| Section | Field | Description |
-|---------|-------|-------------|
-| `locations` | `problem_root` | Root directory containing problem folders |
-| | `report_root` | Root directory for generated reports |
-| | `report_folder_template` | Template for report folder names |
-| `limits` | `memory` | Memory limit in MB |
-| | `time_limit_multiplier` | Multiplier applied to all time limits |
-| | `time.<language>` | Time limit in seconds per language |
-| `runner` | `name` | Solution runner implementation |
-| | `params` | Additional runner parameters |
-| `security` | `report_stdout` | Include stdout in reports |
-| | `report_stderr` | Include stderr in reports |
-| `reporting` | `alert_banner` | Alert message shown in reports |
-| | `warning_banner` | Warning message shown in reports |
-| | `info_banner` | Info message shown in reports |
+Optional problem-specific configuration. Place in each problem's directory to override settings from `hammurabi.yaml`.
 
-### problem.conf
+```yaml
+# Answer verification strategy.
+# You can choose a built-in or a custom verifier.
+verifier: IntegerSequenceVerifier
 
-Problem-specific configuration (JSON). All fields from `grader.conf` can be overridden, plus these additional fields:
+# Custom input/output filenames. Defaults to <problem_name>.in/.out.
+problem_input_file: input.txt
+problem_output_file: output.txt
 
-```json
-{
-  "verifier": "IntegerSequenceVerifier",
-  "problem_input_file": "input.txt",
-  "problem_output_file": "output.txt",
-  "testcase_score": {
-    "01": 10,
-    "02": 20,
-    "03": 30
-  },
-  "limits": {
-    "time": {
-      "python": 30.0
-    }
-  }
-}
+# Score for each test case. Defaults to 1 point per test case.
+testcase_score:
+  "01": 10
+  "02": 20
+  "03": 30
+
+# Override time limits for this problem.
+limits:
+  time:
+    python: 30.0
 ```
-
-#### Problem-Specific Fields
-
-| Field | Description |
-|-------|-------------|
-| `verifier` | Answer verification strategy |
-| `problem_input_file` | Custom input filename (default: `<problem_name>.in`) |
-| `problem_output_file` | Custom output filename (default: `<problem_name>.out`) |
-| `testcase_score` | Map of test case name to score (default: 1 point each) |
 
 ### Custom Verifiers
 
@@ -268,22 +269,12 @@ Built-in verifiers:
 - `FloatSequenceVerifier`
 - `WordSequenceVerifier`
 
-To create a custom verifier, add a Python file to the `verifiers/` directory:
+To create a custom verifier, add a Python file to `hammurabi/grader/verifiers/`. The verifier class must inherit from `AnswerVerifier`. See `custom.py` for an example template.
 
-```
-|-- verifiers/
-    |-- common.py
-    |-- fibonacci.py  <---
-```
+Then reference it in `problem.yaml`:
 
-The verifier class must inherit from `AnswerVerifier`. Check `MyCustomVerifier` for an example implementation.
-
-Then reference it in `problem.conf`:
-
-```json
-{
-  "verifier": "FibonacciVerifier"
-}
+```yaml
+verifier: FibonacciVerifier
 ```
 
 ## Development

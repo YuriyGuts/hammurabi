@@ -1,8 +1,9 @@
 """Tests for configuration models."""
 
-import json
 import tempfile
 from pathlib import Path
+
+import yaml
 
 from hammurabi.grader.config import GraderConfig
 from hammurabi.grader.config import LimitsConfig
@@ -103,8 +104,8 @@ class TestGraderConfig:
             "locations": {"problem_root": "custom/problems"},
             "limits": {"memory": 1024, "time": {"python": 30.0}},
         }
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(data, f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(data, f)
             path = Path(f.name)
 
         try:
@@ -151,8 +152,8 @@ class TestProblemConfig:
             "problem_input_file": "input.txt",
             "testcase_score": {"01": 5, "02": 10},
         }
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            json.dump(data, f)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            yaml.dump(data, f)
             path = Path(f.name)
 
         try:

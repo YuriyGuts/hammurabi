@@ -1,12 +1,8 @@
 # -----------------
 # Project-specific
 # -----------------
-hammurabi/conf/*.conf
-hammurabi/grader/problems/*
-!hammurabi/grader/problems/README.md
-
-hammurabi/grader/reports/testrun*
-hammurabi/grader/reports/report*
+problems
+reports
 
 hammurabi/grader/verifiers/*
 !hammurabi/grader/verifiers/__init__.py

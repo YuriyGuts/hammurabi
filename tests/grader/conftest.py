@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import platform
 import shutil
 from pathlib import Path
 
 import pytest
+import yaml
 
 
 def generate_hammurabi_environment(
@@ -35,7 +35,7 @@ def generate_hammurabi_environment(
 
     problem_dir_path = str(target_problem_dir)
     report_dir_path = str(tmpdir.mkdir("reports"))
-    config_file_path = str(tmpdir.join("grader.conf"))
+    config_file_path = str(tmpdir.join("hammurabi.yaml"))
 
     if platform.system() == "Windows":
         problem_dir_path = problem_dir_path.replace("\\", "/")
@@ -50,7 +50,7 @@ def generate_hammurabi_environment(
         }
     }
     with open(config_file_path, "w", encoding="utf-8") as conf:
-        conf.write(json.dumps(config, indent=4))
+        yaml.dump(config, conf, default_flow_style=False)
 
     return config_file_path, problem_dir_path, report_dir_path
 

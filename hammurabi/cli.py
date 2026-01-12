@@ -131,7 +131,7 @@ def _print_banner() -> None:
     product.print_banner()
 
 
-def _run_grader(args: argparse.Namespace) -> None:
+def _run_grader(args: argparse.Namespace) -> int | None:
     """
     Run the grading process.
 
@@ -139,8 +139,18 @@ def _run_grader(args: argparse.Namespace) -> None:
     ----------
     args
         Parsed command-line arguments.
+
+    Returns
+    -------
+    int | None
+        Exit code, or None if successful.
     """
-    grader.grade(args)
+    try:
+        grader.grade(args)
+        return None
+    except (FileNotFoundError, OSError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
 
 
 def _describe_languages() -> int:

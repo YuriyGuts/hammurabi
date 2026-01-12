@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
+import yaml
 from pydantic import BaseModel
 from pydantic import Field
 
@@ -83,10 +83,10 @@ class GraderConfig(BaseModel):
 
     @classmethod
     def from_file(cls, path: str | Path) -> GraderConfig:
-        """Load configuration from a JSON file."""
+        """Load configuration from a YAML file."""
         with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-        return cls.model_validate(data)
+            data = yaml.safe_load(f)
+        return cls.model_validate(data or {})
 
     def merge_with(self, other: ProblemConfig) -> ProblemConfig:
         """
@@ -140,10 +140,10 @@ class ProblemConfig(BaseModel):
 
     @classmethod
     def from_file(cls, path: str | Path) -> ProblemConfig:
-        """Load the problem configuration from a JSON file."""
+        """Load the problem configuration from a YAML file."""
         with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-        return cls.model_validate(data)
+            data = yaml.safe_load(f)
+        return cls.model_validate(data or {})
 
     def get_testcase_score(self, testcase_name: str, default: int = 1) -> int:
         """Get the score for a specific test case."""

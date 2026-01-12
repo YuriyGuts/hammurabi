@@ -17,7 +17,7 @@ Expected directory layout:
     |   |-- answers/
     |   |   |-- 01.out
     |   |   |-- 02.out
-    |   |-- problem.conf
+    |   |-- problem.yaml
     |-- problem2_name/
     |   |-- ...
 """
@@ -60,6 +60,14 @@ def discover_problems(grader_config: GraderConfig) -> list[Problem]:
     result: list[Problem] = []
     problem_root = Path(grader_config.problem_root_dir)
 
+    if not problem_root.exists():
+        raise FileNotFoundError(
+            f"Problems directory not found: {problem_root}\n\n"
+            f"To fix this, either:\n"
+            f"  1. Create the directory and add your problems there, or\n"
+            f"  2. Update 'problem_root' in hammurabi.yaml to point to your problems directory."
+        )
+
     for problem_path in _get_immediate_subdirs(problem_root):
         problem = Problem(problem_path.name, str(problem_path))
 
@@ -87,7 +95,9 @@ def discover_problems(grader_config: GraderConfig) -> list[Problem]:
 
 def _read_problem_config(problem_path: Path) -> ProblemConfig:
     """Read the problem-specific configuration file."""
-    config_path = problem_path / "problem.conf"
+    config_path = problem_path / "problem.yaml"
+    if not config_path.exists():
+        return ProblemConfig()
     return confreader.read_problem_config(config_path)
 
 

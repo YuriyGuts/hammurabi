@@ -69,14 +69,17 @@ def _read_config(args: argparse.Namespace) -> GraderConfig:
     """Read and return the grader configuration."""
     if args.conf is not None:
         config_file = Path(args.conf).resolve()
-    else:
-        config_dir = Path(__file__).parent.parent / "conf"
-        config_file = config_dir / "grader.conf"
+        if not config_file.exists():
+            raise OSError(f"Configuration file '{config_file}' not found.")
+        return confreader.read_grader_config(str(config_file))
 
+    # Search for config in current working directory
+    cwd = Path.cwd()
+    config_file = cwd / "hammurabi.yaml"
     if not config_file.exists():
         raise OSError(
-            f"Configuration file '{config_file}' not found. "
-            "Please create one or copy it from grader.conf.template."
+            f"Configuration file 'hammurabi.yaml' not found in {cwd}.\n"
+            "Please create a hammurabi.yaml configuration file."
         )
     return confreader.read_grader_config(str(config_file))
 
@@ -129,7 +132,7 @@ def _get_problem_root_dir(config: GraderConfig) -> str:
     """Get the root directory for problems."""
     problem_root_path = Path(config.locations.problem_root)
     if not problem_root_path.is_absolute():
-        problem_root_path = (Path(__file__).parent.parent / problem_root_path).resolve()
+        problem_root_path = (Path.cwd() / problem_root_path).resolve()
     return str(problem_root_path)
 
 
@@ -137,7 +140,7 @@ def _get_report_root_dir(config: GraderConfig) -> str:
     """Get the root directory for reports."""
     report_root_path = Path(config.locations.report_root)
     if not report_root_path.is_absolute():
-        report_root_path = (Path(__file__).parent.parent / report_root_path).resolve()
+        report_root_path = (Path.cwd() / report_root_path).resolve()
     return str(report_root_path)
 
 

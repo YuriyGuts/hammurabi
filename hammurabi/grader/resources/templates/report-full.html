@@ -53,15 +53,15 @@
                             </tr>
                             <tr>
                                 <td>Result</td>
-                                <td><samp>[{{ testrun.result.status_code }}] {{ testrun.result.status }}</samp></td>
+                                <td><samp>{% if testrun.result %}[{{ testrun.result.status_code }}] {{ testrun.result.status }}{% else %}No result{% endif %}</samp></td>
                             </tr>
                             <tr>
                                 <td>Score</td>
-                                <td><samp>{{ testrun.result.score }}</samp></td>
+                                <td><samp>{{ testrun.result.score if testrun.result else "N/A" }}</samp></td>
                             </tr>
                         </table>
 
-                        <p>Result details: {{ pre_if_not_empty(testrun.result.format_details()) }}</p>
+                        <p>Result details: {{ pre_if_not_empty(testrun.result.format_details() if testrun.result else "") }}</p>
                         <p>Compiler output: {{ pre_if_not_empty(testrun.compiler_output_filename|dump_file) }}</p>
                         <p>Standard output stream: {{ pre_if_not_empty(testrun.stdout_filename|dump_file) }}</p>
                         <p>Standard error stream: {{ pre_if_not_empty(testrun.stderr_filename|dump_file) }}</p>

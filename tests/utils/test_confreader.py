@@ -1,8 +1,7 @@
 """Tests for configuration file reader."""
 
-import json
-
 import pytest
+import yaml
 
 from hammurabi.grader.config import GraderConfig
 from hammurabi.grader.config import ProblemConfig
@@ -20,34 +19,34 @@ SAMPLE_PROBLEM_CONFIG = {
     "problem_input_file": "input.txt",
 }
 
-INVALID_CONFIG_CONTENT = '{\n    "locations": }}}\n}'
+INVALID_CONFIG_CONTENT = "locations: [[[invalid"
 
 
 @pytest.fixture
 def filename_for_sample_grader_config(tmpdir):
-    file_path = tmpdir.join("grader.conf")
+    file_path = tmpdir.join("hammurabi.yaml")
     filename = file_path.strpath
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(json.dumps(SAMPLE_GRADER_CONFIG, indent=4))
+        yaml.dump(SAMPLE_GRADER_CONFIG, f)
 
     return filename
 
 
 @pytest.fixture
 def filename_for_sample_problem_config(tmpdir):
-    file_path = tmpdir.join("problem.conf")
+    file_path = tmpdir.join("problem.yaml")
     filename = file_path.strpath
 
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(json.dumps(SAMPLE_PROBLEM_CONFIG, indent=4))
+        yaml.dump(SAMPLE_PROBLEM_CONFIG, f)
 
     return filename
 
 
 @pytest.fixture
 def filename_for_invalid_config(tmpdir):
-    file_path = tmpdir.join("config_invalid.conf")
+    file_path = tmpdir.join("config_invalid.yaml")
     filename = file_path.strpath
 
     with open(filename, "w", encoding="utf-8") as f:
@@ -58,11 +57,11 @@ def filename_for_invalid_config(tmpdir):
 
 @pytest.fixture
 def non_existent_filename(tmpdir):
-    return tmpdir.join("i_do_not_exist.conf").strpath
+    return tmpdir.join("i_do_not_exist.yaml").strpath
 
 
-def test_read_grader_config_given_invalid_json_throws(filename_for_invalid_config):
-    with pytest.raises(json.JSONDecodeError):
+def test_read_grader_config_given_invalid_yaml_throws(filename_for_invalid_config):
+    with pytest.raises(yaml.YAMLError):
         confreader.read_grader_config(filename_for_invalid_config)
 
 
@@ -71,7 +70,7 @@ def test_read_grader_config_given_nonexistent_file_throws(non_existent_filename)
         confreader.read_grader_config(non_existent_filename)
 
 
-def test_read_grader_config_given_valid_json_returns_config(filename_for_sample_grader_config):
+def test_read_grader_config_given_valid_yaml_returns_config(filename_for_sample_grader_config):
     config = confreader.read_grader_config(filename_for_sample_grader_config)
 
     assert isinstance(config, GraderConfig)
@@ -79,7 +78,7 @@ def test_read_grader_config_given_valid_json_returns_config(filename_for_sample_
     assert config.locations.report_root == "reports"
 
 
-def test_read_problem_config_given_valid_json_returns_config(filename_for_sample_problem_config):
+def test_read_problem_config_given_valid_yaml_returns_config(filename_for_sample_problem_config):
     config = confreader.read_problem_config(filename_for_sample_problem_config)
 
     assert isinstance(config, ProblemConfig)

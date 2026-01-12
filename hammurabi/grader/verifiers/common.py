@@ -21,9 +21,17 @@ class AnswerVerifier:
     def verify(self, testrun: TestRun) -> bool:
         """Verify the answer using strict byte-by-byte comparison."""
         assert testrun.answer_filename is not None
-        return filecmp.cmp(
+        is_correct = filecmp.cmp(
             testrun.answer_filename, testrun.testcase.correct_answer_filename, shallow=False
         )
+        if is_correct:
+            testrun.result = TestRunCorrectAnswerResult()
+        else:
+            testrun.result = TestRunWrongAnswerResult(
+                expected="(see correct answer file)",
+                actual="(see solution output file)",
+            )
+        return is_correct
 
 
 class SpaceCharacterSeparatedSequenceVerifier(AnswerVerifier):

@@ -1,0 +1,58 @@
+# Hammurabi grader configuration.
+
+locations:
+  # All relative paths below are resolved from the directory containing this config file.
+
+  # Directory containing your problem folders. Each subdirectory represents
+  # one problem and should contain solutions/, testcases/, and answers/ folders.
+  problem_root: problems
+
+  # Directory where grading reports will be generated. A new timestamped
+  # subfolder is created for each grading run.
+  report_root: reports
+
+  # Template for naming report subfolders. Available variables: {dt} for
+  # datetime and {hostname} for the machine name.
+  report_folder_template: "testrun-{dt:%Y%m%d-%H%M%S-%f}-{hostname}"
+
+security:
+  # Set to true to include the solution's standard output in reports.
+  report_stdout: true
+
+  # Set to true to include the solution's standard error in reports.
+  report_stderr: true
+
+runner:
+  # The solution runner implementation to use.
+  name: SubprocessSolutionRunner
+
+  # Additional parameters passed to the runner.
+  params: {}
+
+# The default execution constraints applied to each problem.
+# Can be overridden by problem-specific `problem.yaml` files.
+limits:
+  # Maximum memory allowed for each solution, in megabytes.
+  memory: 512
+
+  # The multiplier applied to all time limits.
+  # Can be useful for running existing configurations
+  # which were previously tested on faster/slower machines.
+  time_limit_multiplier: 1.0
+
+  # Maximum execution time per language, in seconds.
+  time:
+    c: 4.0
+    cpp: 4.0
+    csharp: 6.0
+    java: 8.0
+    javascript: 20.0
+    php: 18.0
+    python: 20.0
+    ruby: 20.0
+
+reporting:
+  # Optional banners displayed at the top of HTML reports. Can include HTML.
+  alert_banner: ""
+  warning_banner: ""
+  info_banner: ""
