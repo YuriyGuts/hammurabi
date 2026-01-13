@@ -9,6 +9,7 @@ from dataclasses import field
 from typing import Any
 
 from hammurabi.grader.config import ProblemConfig
+from hammurabi.utils import terminal
 
 
 @dataclass(eq=False)
@@ -152,6 +153,10 @@ class TestRunResult:
         """Return string representation of the result."""
         return f"[{self.status_code}] {self.status}, Score: {self.score}"
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return str(self)
+
     def is_correct(self) -> bool:
         """Return True if the result indicates a correct answer."""
         return False
@@ -175,6 +180,10 @@ class TestRunCorrectAnswerResult(TestRunResult):
         """Return True since this result indicates a correct answer."""
         return True
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.green(str(self))
+
 
 @dataclass
 class TestRunWrongAnswerResult(TestRunResult):
@@ -195,6 +204,10 @@ class TestRunWrongAnswerResult(TestRunResult):
             return self.custom_message
         return f"Expected: {self.expected}, Actual: {self.actual}"
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.red(str(self))
+
 
 @dataclass
 class TestRunRuntimeErrorResult(TestRunResult):
@@ -211,6 +224,10 @@ class TestRunRuntimeErrorResult(TestRunResult):
         """Return the runtime error message."""
         return self.message
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.bright_red(str(self))
+
 
 @dataclass
 class TestRunFormatErrorResult(TestRunResult):
@@ -226,6 +243,10 @@ class TestRunFormatErrorResult(TestRunResult):
     def format_details(self) -> str | None:
         """Return the format error message."""
         return self.message
+
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.red(str(self))
 
 
 @dataclass
@@ -245,6 +266,10 @@ class TestRunInternalErrorResult(TestRunResult):
             return super().format_details()
         return self.exception_info
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.magenta(str(self))
+
 
 @dataclass
 class TestRunCompilationErrorResult(TestRunResult):
@@ -261,6 +286,10 @@ class TestRunCompilationErrorResult(TestRunResult):
         """Return the compilation error message."""
         return self.message
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.yellow(str(self))
+
 
 @dataclass
 class TestRunSolutionMissingResult(TestRunResult):
@@ -271,6 +300,10 @@ class TestRunSolutionMissingResult(TestRunResult):
 
     status_code: str = field(default="N", init=False)
     status: str = field(default="Solution Missing", init=False)
+
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.dim(str(self))
 
 
 @dataclass
@@ -288,6 +321,10 @@ class TestRunUnverifiedResult(TestRunResult):
         """Return the reason the result was not verified."""
         return self.message
 
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.cyan(str(self))
+
 
 @dataclass
 class TestRunTimeoutResult(TestRunResult):
@@ -303,6 +340,10 @@ class TestRunTimeoutResult(TestRunResult):
     def format_details(self) -> str | None:
         """Return a message about the timeout limit exceeded."""
         return f"Execution time exceeded the limit of {self.timeout:.2g} seconds"
+
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.yellow(str(self))
 
 
 @dataclass
@@ -325,6 +366,10 @@ class TestRunMemoryExceededResult(TestRunResult):
                 f"exceeded the limit of {self.memory_limit_mb} MB"
             )
         return f"Memory limit of {self.memory_limit_mb} MB exceeded"
+
+    def colored_str(self) -> str:
+        """Return colored string representation of the result."""
+        return terminal.yellow(str(self))
 
 
 @dataclass

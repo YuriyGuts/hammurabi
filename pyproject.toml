@@ -1,6 +1,6 @@
 [project]
 name = "hammurabi"
-version = "0.4.0"
+version = "0.5.0"
 description = "An automated judge for algorithmic programming contests. Strict, but fair."
 readme = "README.md"
 license = "BSD-3-Clause"

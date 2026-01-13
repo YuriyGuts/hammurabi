@@ -9,6 +9,7 @@ from pathlib import Path
 from hammurabi.grader import adapters
 from hammurabi.grader import grader
 from hammurabi.utils import product
+from hammurabi.utils import terminal
 
 ERROR_INVALID_ARGS = 1
 
@@ -118,7 +119,8 @@ def _parse_command_line_args(args: list[str]) -> argparse.Namespace:
 
         for command, description, parser in subparser_descriptions:
             print()
-            print("-" * 30, "COMMAND:", command, "-" * 30)
+            separator = terminal.dim("-" * 30)
+            print(separator, terminal.cyan_bold(f"COMMAND: {command}"), separator)
             print(description)
             print()
             parser.print_help()
@@ -149,7 +151,7 @@ def _run_grader(args: argparse.Namespace) -> int | None:
         grader.grade(args)
         return None
     except (FileNotFoundError, OSError) as e:
-        print(f"Error: {e}", file=sys.stderr)
+        print(terminal.red(f"Error: {e}"), file=sys.stderr)
         return 1
 
 
@@ -165,7 +167,7 @@ def _describe_languages() -> int:
     registered = sorted(adapters.registered_adapters.items(), key=lambda item: item[0])
     for language, adapter in registered:
         print()
-        print(f"--- {language} [{adapter.__name__}] ---")
+        print(terminal.cyan(f"--- {language} [{adapter.__name__}] ---"))
         adapter.describe()
 
     return 0

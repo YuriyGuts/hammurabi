@@ -17,6 +17,8 @@ from enum import Enum
 from functools import lru_cache
 from pathlib import Path
 
+from hammurabi.utils import terminal
+
 
 class WindowsToolchain(Enum):
     """Available C/C++ toolchains on Windows."""
@@ -206,11 +208,13 @@ def print_compiler_version() -> None:
     """Print the version information of the detected compiler."""
     config = detect_toolchain()
     if config is None:
-        print("No C/C++ toolchain detected on Windows.")
+        print(terminal.yellow("No C/C++ toolchain detected on Windows."))
         print("Install one of:")
-        print("  - MinGW-w64: https://www.msys2.org/ (recommended)")
+        print(terminal.dim("  - MinGW-w64: https://www.msys2.org/ (recommended)"))
         print(
-            "  - VS Build Tools: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022"
+            terminal.dim(
+                "  - VS Build Tools: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022"
+            )
         )
         return
 

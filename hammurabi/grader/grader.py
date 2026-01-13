@@ -27,6 +27,7 @@ from hammurabi.grader.model import TestRunSolutionMissingResult
 from hammurabi.grader.model import TestRunUnverifiedResult
 from hammurabi.grader.verifiers.common import AnswerVerifier
 from hammurabi.utils import confreader
+from hammurabi.utils import terminal
 
 
 def grade(args: argparse.Namespace) -> None:
@@ -42,17 +43,19 @@ def grade(args: argparse.Namespace) -> None:
     try:
         for problem in scope.tasks:
             print()
-            print(f"Judging problem: {problem.name}")
-            print("=" * 75)
+            print(terminal.cyan_bold(f"Judging problem: {problem.name}"))
+            print(terminal.dim("=" * 75))
 
             for solution in scope.tasks[problem]:
                 print()
                 print(
-                    f"Judging solution: {problem.name}   "
-                    f"Author: {solution.author}   "
-                    f"Language: {solution.language}"
+                    terminal.cyan(
+                        f"Judging solution: {problem.name}   "
+                        f"Author: {solution.author}   "
+                        f"Language: {solution.language}"
+                    )
                 )
-                print("-" * 75)
+                print(terminal.dim("-" * 75))
 
                 testcases = scope.tasks[problem][solution]
                 solution_testruns = judge_solution(solution, testcases)
@@ -190,12 +193,13 @@ def judge_solution(solution: Solution, testcases: list[TestCase]) -> list[TestRu
         judge_time_elapsed = testrun.get_judge_elapsed_milliseconds()
         judge_overhead = judge_time_elapsed - lean_time_elapsed
 
+        result_str = testrun.result.colored_str() if testrun.result else ""
         print(
-            f"-> {testrun.result}, Time: {lean_time_elapsed} ms, "
+            f"-> {result_str}, Time: {lean_time_elapsed} ms, "
             f"Overall time: {judge_time_elapsed} (+{judge_overhead}) ms"
         )
         if isinstance(testrun.result, TestRunInternalErrorResult):
-            print(testrun.result.format_details())
+            print(terminal.red(testrun.result.format_details() or ""))
 
         testruns.append(testrun)
 
@@ -323,10 +327,10 @@ def _generate_reports(config: GraderConfig, testruns: list[TestRun]) -> None:
         shutil.copy(css, report_output_path)
 
     print()
-    print("Reports:")
-    print("--------")
-    print("Pickled test runs:", pickle_location)
-    print("CSV log:", testrun_csv_log_location)
-    print("Detailed HTML log:", full_html_log_location)
-    print("Matrix HTML report:", matrix_html_report_location)
-    print("Heatmap HTML report:", heatmap_html_report_location)
+    print(terminal.bold("Reports:"))
+    print(terminal.dim("--------"))
+    print("Pickled test runs:", terminal.green(pickle_location))
+    print("CSV log:", terminal.green(testrun_csv_log_location))
+    print("Detailed HTML log:", terminal.green(full_html_log_location))
+    print("Matrix HTML report:", terminal.green(matrix_html_report_location))
+    print("Heatmap HTML report:", terminal.green(heatmap_html_report_location))
