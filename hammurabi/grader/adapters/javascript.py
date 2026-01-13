@@ -18,7 +18,7 @@ class JavaScriptSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Node.js version information."""
-        subprocess.call(["node", "--version"])
+        JavaScriptSolutionAdapter._run_version_command(["node", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

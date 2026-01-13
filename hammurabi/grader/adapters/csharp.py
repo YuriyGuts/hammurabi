@@ -24,7 +24,7 @@ class CSharpSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print .NET SDK version information."""
-        subprocess.call(["dotnet", "--version"])
+        CSharpSolutionAdapter._run_version_command(["dotnet", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

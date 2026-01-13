@@ -19,8 +19,8 @@ class JavaSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Java compiler and runtime version information."""
-        subprocess.call(["java", "-version"])
-        subprocess.call(["javac", "-version"])
+        JavaSolutionAdapter._run_version_command(["java", "-version"])
+        JavaSolutionAdapter._run_version_command(["javac", "-version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

@@ -28,7 +28,7 @@ class CSolutionAdapter(BaseSolutionAdapter):
             windows_toolchain.print_compiler_version()
         else:
             env = {**os.environ, "LC_ALL": "C", "LANG": "C"}
-            subprocess.call(["gcc", "--version"], env=env)
+            CSolutionAdapter._run_version_command(["gcc", "--version"], env=env)
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

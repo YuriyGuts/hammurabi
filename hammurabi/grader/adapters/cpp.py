@@ -26,7 +26,7 @@ class CppSolutionAdapter(BaseSolutionAdapter):
         if platform.system() == "Windows":
             windows_toolchain.print_compiler_version()
         else:
-            subprocess.call(["g++", "--version"])
+            CppSolutionAdapter._run_version_command(["g++", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

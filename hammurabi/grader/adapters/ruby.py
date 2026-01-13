@@ -18,7 +18,7 @@ class RubySolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Ruby interpreter version information."""
-        subprocess.call(["ruby", "--version"])
+        RubySolutionAdapter._run_version_command(["ruby", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

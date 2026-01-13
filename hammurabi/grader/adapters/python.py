@@ -18,7 +18,7 @@ class PythonSolutionAdapter(BaseSolutionAdapter):
     @staticmethod
     def describe() -> None:
         """Print Python interpreter version information."""
-        subprocess.call(["python", "--version"])
+        PythonSolutionAdapter._run_version_command(["python", "--version"])
 
     def get_language_name(self) -> str:
         """Return the language identifier."""

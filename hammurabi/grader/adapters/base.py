@@ -49,6 +49,14 @@ class BaseSolutionAdapter:
         """Print version information for the language runtime."""
         pass
 
+    @staticmethod
+    def _run_version_command(cmd: list[str], env: dict[str, str] | None = None) -> None:
+        """Run a version command, handling missing executables gracefully."""
+        try:
+            subprocess.call(cmd, env=env)
+        except FileNotFoundError:
+            print(f"{cmd[0]}: not found")
+
     def get_language_name(self) -> str | None:
         """Return the language identifier."""
         return None
